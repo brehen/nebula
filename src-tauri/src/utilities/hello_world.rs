@@ -1,18 +1,24 @@
+use std::time::Instant;
+
 use wasmtime::*;
+
+use super::wasm_module::FunctionResult;
 
 struct MyState {
     name: String,
     count: usize,
 }
 
-pub fn run_modules(file: String) -> Result<String, ()> {
+pub fn run_modules(file: String) -> FunctionResult {
+    let start = Instant::now();
+
     // First the wasm module needs to be compiled. This is done with a global
     // "compilation environment" within an `Engine`. Note that engines can be
     // further configured through `Config` if desired instead of using the
     // default like this is here.
     println!("Compiling module...");
     let engine = Engine::default();
-    let module = Module::from_file(&engine, file).expect("To find file");
+    let module = Module::from_file(&engine, &file).expect("To find file");
 
     let mut imports = Vec::new();
 
@@ -71,6 +77,11 @@ pub fn run_modules(file: String) -> Result<String, ()> {
 
     //    println!("Result: {:?}", result);
 
-    println!("Done.");
-    Ok("hey".to_string())
+    let duration = start.elapsed().as_micros();
+    println!("Done. time: {:?}", duration);
+
+    FunctionResult {
+        function_name: file,
+        total_runtime: duration,
+    }
 }
