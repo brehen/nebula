@@ -8,14 +8,13 @@
 
 use std::{fs, io, path::PathBuf};
 
-use nebs::utilities::hello_world::run_modules;
+use nebs::utilities::{hello_world::run_modules, wasm_module::FunctionResult};
 
 #[tauri::command]
-fn run_module(module_path: String) -> Result<Option<String>, ()> {
+fn run_module(module_path: String) -> Result<FunctionResult, ()> {
     let result = run_modules(module_path);
-    println!("Result: {:?}", result);
 
-    Ok(Some("hey".to_string()))
+    Ok(result)
 }
 
 #[tauri::command]
