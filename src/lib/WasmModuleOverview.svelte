@@ -2,17 +2,25 @@
   import { invoke } from "@tauri-apps/api/tauri";
   import { onMount } from "svelte";
 
-  let funcResult = "";
+  type FunctionResult = {
+    function_name: string;
+    start: number;
+    end: number;
+    total_runtime: number;
+  };
+  let funcResult: FunctionResult;
   let files: string[] = [];
-  let runHistory: {
-    file: string;
-    result: string;
-  }[] = [];
+  let runHistory: FunctionResult[] = [];
 
   async function run_module(file: string) {
     // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-    funcResult = await invoke("run_module", { modulePath: `./${file}` });
-    runHistory = [...runHistory, { file, result: funcResult }];
+    funcResult = await invoke<FunctionResult>("run_module", {
+      modulePath: `./${file}`,
+    });
+    console.log(funcResult);
+    runHistory = [...runHistory, funcResult];
+    console.log({ runHistory });
+    console.table(runHistory);
   }
 
   async function get_wats() {
@@ -37,7 +45,7 @@
   </ol>
   <ol>
     {#each runHistory as entry}
-      <li><span>{entry.result}</span></li>
+      <li><span>{JSON.stringify(entry)}</span></li>
     {/each}
   </ol>
 </div>
