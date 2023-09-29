@@ -1,16 +1,12 @@
-#[no_mangle]
-pub extern "C" fn fibonacci(size: i32) -> Vec<i32> {
-    let mut sequence = Vec::<i32>::new();
+pub fn fibonacci(size: usize) -> Vec<u64> {
+    let mut sequence = Vec::with_capacity(size);
 
     for i in 0..size {
-        if i == 0 {
-            sequence.push(0);
-        } else if i == 1 {
-            sequence.push(1);
+        if i == 0 || i == 1 {
+            sequence.push(i as u64);
         } else {
-            let last = *sequence.last().unwrap();
-            let second_last = &sequence[sequence.len() - 2];
-            sequence.push(last + second_last)
+            let next_value = sequence[i - 1] + sequence[i - 2];
+            sequence.push(next_value);
         }
     }
 
@@ -32,3 +28,4 @@ mod tests {
         assert_eq!(sequence, vec![0, 1, 1, 2, 3, 5, 8, 13, 21]);
     }
 }
+
