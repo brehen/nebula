@@ -9,12 +9,7 @@ use wasi_common::pipe::{ReadPipe, WritePipe};
 use wasmtime::*;
 use wasmtime_wasi::sync::WasiCtxBuilder;
 
-#[derive(Debug)]
-pub struct FunctionResult {
-    pub total_elapsed_time: usize,
-    pub startup_time: usize,
-    pub result: String,
-}
+use crate::models::FunctionResult;
 
 pub fn run_wasi_module(path: &str, input: &str) -> Result<FunctionResult, Box<dyn Error>> {
     let start = Instant::now();
