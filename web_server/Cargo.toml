@@ -1,5 +1,5 @@
 [package]
-name = "tokio_app"
+name = "nebula_server"
 version = "0.1.0"
 edition = "2021"
 
@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 axum = "0.6.20"
 tokio = { version = "1.32.0", features = ["full"] }
+nebula_lib = { path = "../nebula_lib/" }
