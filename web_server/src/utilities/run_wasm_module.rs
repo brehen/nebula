@@ -1,7 +1,10 @@
 use std::env;
 
 use axum::{extract::Path, response::Html};
-use nebula_lib::wasm_runner::{self, FunctionResult};
+use nebula_lib::{
+    models::FunctionResult,
+    wasm_runner::{self},
+};
 
 pub fn run_wasm_module(size: &str) -> FunctionResult {
     let cwd = env::current_dir().expect("cwd to exist");
