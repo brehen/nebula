@@ -16,3 +16,17 @@ fn fibonacci(n: usize) -> Vec<u64> {
     }
     seq
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn it_works() {
+        let sequence = fibonacci(5);
+        assert_eq!(sequence, vec![0, 1, 1, 2, 3]);
+
+        let sequence = fibonacci(9);
+        assert_eq!(sequence, vec![0, 1, 1, 2, 3, 5, 8, 13, 21]);
+    }
+}
