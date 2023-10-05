@@ -9,7 +9,7 @@ use wasi_common::pipe::{ReadPipe, WritePipe};
 use wasmtime::*;
 use wasmtime_wasi::sync::WasiCtxBuilder;
 
-use crate::models::FunctionResult;
+use crate::models::{FunctionResult, Metrics};
 
 pub fn run_wasi_module(path: &str, input: &str) -> Result<FunctionResult, Box<dyn Error>> {
     let start = Instant::now();
@@ -35,7 +35,7 @@ pub fn run_wasi_module(path: &str, input: &str) -> Result<FunctionResult, Box<dy
     // Instantiate our module with the imports we've created, and run it.
     let module = Module::from_file(&engine, path)?;
 
-    let startup_time = start.clone().elapsed().as_millis() as usize;
+    let startup_time = start.clone().elapsed().as_millis();
 
     linker
         .module(&mut store, "", &module)
@@ -59,17 +59,19 @@ pub fn run_wasi_module(path: &str, input: &str) -> Result<FunctionResult, Box<dy
     let result = String::from_utf8(contents)?;
     // println!("output: {:?}", result);
 
-    let total_elapsed_time = start.elapsed().as_millis() as usize;
+    let total_runtime = start.elapsed().as_millis();
 
     println!(
         "Done! Elapsed time: {}ms, used {}ms to start up.",
-        total_elapsed_time, startup_time
+        total_runtime, startup_time
     );
 
     Ok(FunctionResult {
-        total_elapsed_time,
-        startup_time,
         result,
+        metrics: Some(Metrics {
+            total_runtime,
+            startup_time,
+        }),
     })
 }
 
