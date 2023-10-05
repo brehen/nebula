@@ -5,9 +5,7 @@ fn main() {
     io::stdin().read_to_string(&mut buffer).unwrap();
     let num: usize = buffer.trim().parse().unwrap();
     let fib_seq = fibonacci(num);
-    for num in fib_seq {
-        println!("{}", num);
-    }
+    println!("{:?}", fib_seq);
 }
 
 fn fibonacci(n: usize) -> Vec<u64> {
