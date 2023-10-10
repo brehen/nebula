@@ -14,6 +14,7 @@ pub struct DockerModule<Input = String, Output = Option<String>> {
     pub metrics: Option<Metrics>,
 }
 
+#[allow(dead_code)]
 impl<Input, Output> DockerModule<Input, Output> {
     fn new(image_name: String, input: Input, collect_metrics: Option<bool>) -> Self {
         DockerModule {

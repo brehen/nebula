@@ -4,6 +4,7 @@ pub struct WasmModule<Input = String, Output = Option<String>> {
     pub output: Option<Output>,
 }
 
+#[allow(dead_code)]
 impl<Input, Output> WasmModule<Input, Output> {
     fn new(module_name: String, input: Input) -> Self {
         WasmModule {
