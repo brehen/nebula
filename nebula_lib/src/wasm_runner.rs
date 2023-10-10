@@ -1,6 +1,6 @@
 //! Example of instantiating a wasm module which uses WASI imports.
 
-use std::time::Instant;
+use std::{path::PathBuf, time::Instant};
 
 use anyhow::Result;
 use std::error::Error;
@@ -11,7 +11,7 @@ use wasmtime_wasi::sync::WasiCtxBuilder;
 
 use crate::models::{FunctionResult, Metrics};
 
-pub fn run_wasi_module(path: &str, input: &str) -> Result<FunctionResult, Box<dyn Error>> {
+pub fn run_wasi_module(path: &PathBuf, input: &str) -> Result<FunctionResult, Box<dyn Error>> {
     let start = Instant::now();
     // Define the WASI functions globally on the `Config`.
     let engine = Engine::default();
@@ -56,8 +56,7 @@ pub fn run_wasi_module(path: &str, input: &str) -> Result<FunctionResult, Box<dy
         .map_err(|_err| anyhow::Error::msg("sole remaining reference"))?
         .into_inner();
 
-    let result = String::from_utf8(contents)?;
-    // println!("output: {:?}", result);
+    let result = String::from_utf8(contents)?.trim().to_string();
 
     let total_runtime = start.elapsed().as_millis();
 
@@ -85,7 +84,7 @@ mod tests {
     fn it_works() {
         let files = list_files("../faas_user/modules").unwrap();
         println!("{:?}", files);
-        match run_wasi_module(&files[0], "2") {
+        match run_wasi_module(files.get(0).expect("to exist"), "2") {
             Ok(_list) => assert_eq!(2, 3),
             Err(_err) => assert_eq!(1, 2),
         }
