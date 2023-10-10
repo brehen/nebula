@@ -1,5 +1,7 @@
 use std::io::{stdin, BufRead};
 
+// Reads std in as input, retrieves the fibonacci sequence and returns the last number of the
+// fibonacci sequence of the provided size
 fn main() {
     let stdin = stdin();
     let mut input = String::new();
@@ -19,7 +21,7 @@ fn main() {
     };
 
     let sequence = fibonacci(size);
-    println!("{:?}", sequence);
+    println!("{:?}", sequence.last().unwrap());
 }
 
 fn fibonacci(size: i32) -> Vec<u64> {
