@@ -1,8 +1,8 @@
-use std::{fs, io};
+use std::{fs, io, path::PathBuf};
 
-pub fn list_files(dir: &str) -> io::Result<Vec<String>> {
+pub fn list_files(dir: &str) -> io::Result<Vec<PathBuf>> {
     fs::read_dir(dir)?
-        .map(|res| res.map(|e| e.path().display().to_string()))
+        .map(|res| res.map(|e| e.path()))
         .collect::<Result<Vec<_>, io::Error>>()
 }
 
