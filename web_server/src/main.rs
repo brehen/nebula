@@ -1,65 +1,68 @@
-use std::net::{IpAddr, SocketAddr};
-
-use axum::{routing::get, Router};
-use clap::{ArgAction, Parser};
-use log::{info, LevelFilter};
-use nebula_server::utilities::{run_docker::run_fib_docker, run_wasm_module::run_fib_module};
+use anyhow::Context;
+use askama::Template;
+use axum::{
+    http::StatusCode,
+    response::{Html, IntoResponse, Response},
+    routing::get,
+    Router,
+};
+use tracing::info;
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[tokio::main]
-async fn main() {
-    let options = Options::parse();
-    env_logger::Builder::new()
-        .filter_level(options.log_level())
+async fn main() -> anyhow::Result<()> {
+    tracing_subscriber::registry()
+        .with(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| "nebula_server=debug".into()),
+        )
+        .with(tracing_subscriber::fmt::layer())
         .init();
 
-    let app = Router::new()
-        .route(
-            "/",
-            get(|| async { "<!DOCTYPE html><html><body><div>Hei Simen!<br><br>Hvordan går det? :)</div></body></html>" }),
-        )
-        .route(
-            "/fib/:size",
-            get(run_fib_module),
-        )
-        .route(
-            "/docker/fib/:size",
-            get(run_fib_docker),
-        );
+    info!("initializing router...");
 
-    info!(
-        "Up and running on address {}:{}!",
-        options.address, options.port
-    );
+    let router = Router::new().route("/", get(hello));
+    let port = 8000_u16;
+    let addr = std::net::SocketAddr::from(([0, 0, 0, 0], port));
 
-    // run it with hyper on localhost:3000
-    axum::Server::bind(&SocketAddr::new(options.address, options.port))
-        .serve(app.into_make_service())
+    info!("router initialized, now listening on port {}", port);
+
+    axum::Server::bind(&addr)
+        .serve(router.into_make_service())
         .await
-        .unwrap();
+        .context("error while starting server")?;
+
+    Ok(())
 }
 
-#[derive(Parser, Debug)]
-#[command(version, about)]
-pub struct Options {
-    /// Increase logs verbosity (Error (default), Warn, Info, Debug, Trace).
-    #[arg(short = 'v', long = "verbose", action = ArgAction::Count)]
-    pub log_level: u8,
-    /// HTTP listening address.
-    #[arg(short = 'a', long, default_value = "127.0.0.1")]
-    pub address: IpAddr,
-    /// HTTP listening port.
-    #[arg(short = 'p', long, default_value = "8080")]
-    pub port: u16,
+async fn hello() -> impl IntoResponse {
+    let template = HelloTemplate {};
+    HtmlTemplate(template)
 }
 
-impl Options {
-    pub fn log_level(&self) -> LevelFilter {
-        match self.log_level {
-            0 => LevelFilter::Error,
-            1 => LevelFilter::Warn,
-            2 => LevelFilter::Info,
-            3 => LevelFilter::Debug,
-            _ => LevelFilter::Trace,
+#[derive(Template)]
+#[template(path = "hello.html")]
+struct HelloTemplate;
+
+/// A wrapper type that we'll use to encapsulate HTML parsed by askama into valid HTML for axum to serve.
+struct HtmlTemplate<T>(T);
+
+/// Allows us to convert Askama HTML templates into valid HTML for axum to serve in the response.
+impl<T> IntoResponse for HtmlTemplate<T>
+where
+    T: Template,
+{
+    fn into_response(self) -> Response {
+        // Attempt to render the template with askama
+        match self.0.render() {
+            // If we're able to successfully parse and aggregate the template, serve it
+            Ok(html) => Html(html).into_response(),
+            // If we're not, return an error or some bit of fallback HTML
+            Err(err) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Failed to render template. Error: {}", err),
+            )
+                .into_response(),
         }
     }
 }
