@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.75"
+serde = "1.0.188"
 wasi-common = "13.0.0"
 wasmtime = "13.0.0"
 wasmtime-wasi = "13.0.0"
