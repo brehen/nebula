@@ -20,3 +20,4 @@ tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
 tower = "0.4.13"
 tower-http = { version = "0.4.4", features = ["fs"] }
 anyhow = "1.0.75"
+tower-livereload = "0.8.1"
