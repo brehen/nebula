@@ -1,18 +1,31 @@
-use std::path::Path;
+use std::{
+    path::Path,
+    sync::{Arc, Mutex},
+};
 
 use anyhow::Context;
 use askama::Template;
 use axum::{
+    extract::State,
     http::StatusCode,
     response::{Html, IntoResponse, Response},
-    routing::get,
-    Router,
+    routing::{get, post},
+    Form, Router,
 };
-use nebula_lib::list_files::list_files;
-use nebula_server::utilities::run_wasm_module::run_wasm_module;
+use nebula_lib::{
+    docker_runner::run_docker_image, list_files::list_files, models::FunctionResult,
+    wasm_runner::run_wasi_module,
+};
+use nebula_server::utilities::{get_file_path::get_file_path, run_wasm_module::run_wasm_module};
+use serde::Deserialize;
 use tower_http::services::ServeDir;
+use tower_livereload::LiveReloadLayer;
 use tracing::info;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+
+struct AppState {
+    function_calls: Mutex<Vec<FunctionResult>>,
+}
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -29,17 +42,26 @@ async fn main() -> anyhow::Result<()> {
     let assets_path = std::env::current_dir().unwrap();
     let port = 8000_u16;
     let addr = std::net::SocketAddr::from(([0, 0, 0, 0], port));
-    let api_router = Router::new().route("/wasm/:module/:input", get(run_wasm_module));
+    let api_router = Router::new()
+        .route("/wasm/:module/:input", get(run_wasm_module))
+        .route("/wasm", post(call_function));
     //.route("/docker/:module/:input", post(todo!()))
     // .with_state(app_state);
+    //
+    let app_state = Arc::new(AppState {
+        function_calls: Mutex::new(vec![]),
+    });
 
     let router = Router::new()
         .nest("/api", api_router)
         .route("/", get(home))
+        .route("/wasm", get(wasm))
         .nest_service(
             "/assets",
             ServeDir::new(format!("{}/assets", assets_path.to_str().unwrap())),
-        );
+        )
+        .with_state(app_state)
+        .layer(LiveReloadLayer::new());
     info!("router initialized, now listening on port {}", port);
 
     axum::Server::bind(&addr)
@@ -51,12 +73,12 @@ async fn main() -> anyhow::Result<()> {
 }
 
 #[derive(Template)]
-#[template(path = "home.html")]
-struct HomeTemplate {
+#[template(path = "pages/wasm.rs.html")]
+struct WasmTemplate {
     modules: Vec<String>,
 }
 
-async fn home() -> impl IntoResponse {
+async fn wasm() -> impl IntoResponse {
     let modules = list_files("/Users/mariuskluften/projects/wasm_modules")
         .expect("There to be modules on the server");
     info!("{:?}", modules);
@@ -66,7 +88,16 @@ async fn home() -> impl IntoResponse {
         .map(|name| name.to_str().unwrap().to_string())
         .collect();
     info!("{:?}", modules);
-    let template = HomeTemplate { modules };
+    let template = WasmTemplate { modules };
+    HtmlTemplate(template)
+}
+
+#[derive(Template)]
+#[template(path = "pages/home.rs.html")]
+struct HomeTemplate {}
+
+async fn home() -> impl IntoResponse {
+    let template = HomeTemplate {};
     HtmlTemplate(template)
 }
 
@@ -93,27 +124,45 @@ where
     }
 }
 
-// #[derive(Template)]
-// #[template(path = "todo-list.html")]
-// struct TodoList {
-//     todos: Vec<String>,
-// }
+#[derive(Template)]
+#[template(path = "components/function_results.html")]
+struct FCList {
+    function_results: Vec<FunctionResult>,
+}
 
-// #[derive(Deserialize)]
-// struct TodoRequest {
-//     todo: String,
-// }
+#[derive(Deserialize)]
+enum ModuleType {
+    Docker,
+    Wasm,
+}
 
-// async fn add_todo(
-//     State(state): State<Arc<AppState>>,
-//     Form(todo): Form<TodoRequest>,
-// ) -> impl IntoResponse {
-//     let mut lock = state.todos.lock().unwrap();
-//     lock.push(todo.todo);
-//
-//     let template = TodoList {
-//         todos: lock.clone(),
-//     };
-//
-//     HtmlTemplate(template)
-// }
+#[derive(Deserialize)]
+struct FunctionRequest {
+    function_name: String,
+    input: String,
+    module_type: ModuleType,
+}
+
+async fn call_function(
+    State(state): State<Arc<AppState>>,
+    Form(request): Form<FunctionRequest>,
+) -> impl IntoResponse {
+    let result: FunctionResult = match request.module_type {
+        ModuleType::Docker => {
+            let docker_module = format!("brehen/{}", request.input);
+            run_docker_image(&docker_module, &request.input).expect("It to work")
+        }
+        ModuleType::Wasm => {
+            let function_path = get_file_path(&request.function_name);
+            run_wasi_module(&function_path, &request.input).expect("to work")
+        }
+    };
+    let mut lock = state.function_calls.lock().unwrap();
+    lock.push(result);
+
+    let template = FCList {
+        function_results: lock.clone(),
+    };
+
+    HtmlTemplate(template)
+}
