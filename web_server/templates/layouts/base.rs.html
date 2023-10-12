@@ -12,10 +12,10 @@
     <!-- Allow any inheriting page to extend head with additional assets -->
     {% block head %}{% endblock %}
   </head>
-  <body class="bg-slate-900">
+  <body class="bg-slate-400 ">
     <div id="content">
       <!-- Inheriting pages will have their content rendered here, similar to app root in React, Angular, etc. -->
-      {% block content %}{% endblock %}
+      {% block content %} {% endblock %}
     </div>
   </body>
 </html>
