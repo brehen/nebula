@@ -1,7 +1,5 @@
-use std::{
-    path::Path,
-    sync::{Arc, Mutex},
-};
+use std::{path::Path, sync::Arc};
+use tokio::sync::Mutex;
 
 use anyhow::Context;
 use askama::Template;
@@ -157,7 +155,7 @@ async fn call_function(
             run_wasi_module(&function_path, &request.input).expect("to work")
         }
     };
-    let mut lock = state.function_calls.lock().unwrap();
+    let mut lock = state.function_calls.lock().await;
     lock.push(result);
 
     let template = FCList {
