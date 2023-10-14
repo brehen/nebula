@@ -79,13 +79,11 @@ struct WasmTemplate {
 async fn wasm() -> impl IntoResponse {
     let modules = list_files("/Users/mariuskluften/projects/wasm_modules")
         .expect("There to be modules on the server");
-    info!("{:?}", modules);
     let modules: Vec<String> = modules
         .iter()
         .filter_map(|path| Path::new(path).file_stem())
         .map(|name| name.to_str().unwrap().to_string())
         .collect();
-    info!("{:?}", modules);
     let template = WasmTemplate { modules };
     HtmlTemplate(template)
 }
@@ -112,6 +110,7 @@ where
         match self.0.render() {
             // If we're able to successfully parse and aggregate the template, serve it
             Ok(html) => Html(html).into_response(),
+
             // If we're not, return an error or some bit of fallback HTML
             Err(err) => (
                 StatusCode::INTERNAL_SERVER_ERROR,
@@ -145,6 +144,7 @@ async fn call_function(
     State(state): State<Arc<AppState>>,
     Form(request): Form<FunctionRequest>,
 ) -> impl IntoResponse {
+    info!("calling function: {:?}", request.function_name);
     let result: FunctionResult = match request.module_type {
         ModuleType::Docker => {
             let docker_module = format!("brehen/{}", request.input);
