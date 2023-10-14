@@ -3,7 +3,6 @@
 use std::{path::PathBuf, time::Instant};
 
 use anyhow::Result;
-use std::error::Error;
 use wasi_common::pipe::{ReadPipe, WritePipe};
 
 use wasmtime::*;
@@ -11,7 +10,7 @@ use wasmtime_wasi::sync::WasiCtxBuilder;
 
 use crate::models::{FunctionResult, Metrics};
 
-pub fn run_wasi_module(path: &PathBuf, input: &str) -> Result<FunctionResult, Box<dyn Error>> {
+pub fn run_wasi_module(path: &PathBuf, input: &str) -> Result<FunctionResult, anyhow::Error> {
     let start = Instant::now();
     // Define the WASI functions globally on the `Config`.
     let engine = Engine::default();
