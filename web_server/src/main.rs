@@ -159,7 +159,7 @@ async fn call_function(
     lock.push(result);
 
     let template = FCList {
-        function_results: lock.clone(),
+        function_results: lock.clone().into_iter().rev().collect(),
     };
 
     HtmlTemplate(template)
