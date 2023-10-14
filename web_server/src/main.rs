@@ -122,8 +122,8 @@ where
     }
 }
 
-#[derive(Template)]
-#[template(path = "components/function_results.html")]
+#[derive(Template, Debug)]
+#[template(path = "components/function_results.rs.html")]
 struct FCList {
     function_results: Vec<FunctionResult>,
 }
