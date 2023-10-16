@@ -1,24 +1,9 @@
-use std::io::{stdin, BufRead};
+use shared::get_stdin;
 
 // Reads std in as input, retrieves the fibonacci sequence and returns the last number of the
 // fibonacci sequence of the provided size
 fn main() {
-    let stdin = stdin();
-    let mut input = String::new();
-
-    stdin
-        .lock()
-        .read_line(&mut input)
-        .expect("Failed to read line");
-
-    let parsed_input: Result<i32, _> = input.trim().parse();
-
-    let size = if let Ok(size) = parsed_input {
-        size
-    } else {
-        println!("Expected a number, got something else! Defaulting to 1");
-        1
-    };
+    let size: i32 = get_stdin().expect("To parse correctly");
 
     let sequence = fibonacci(size);
     println!("{:?}", sequence.last().unwrap());
