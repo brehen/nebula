@@ -1,12 +1,14 @@
-use shared::get_stdin;
+use shared::{run_function, FunctionType};
 
 // Reads std in as input, retrieves the fibonacci sequence and returns the last number of the
 // fibonacci sequence of the provided size
 fn main() {
-    let size: i64 = get_stdin().expect("To parse correctly");
-
-    let sequence = fib(size);
-    println!("{}", sequence);
+    let func_type = if cfg!(feature = "docker") {
+        FunctionType::Docker
+    } else {
+        FunctionType::Wasm
+    };
+    run_function(fib, func_type)
 }
 
 fn fib(size: i64) -> i64 {

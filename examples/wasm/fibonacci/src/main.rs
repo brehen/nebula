@@ -1,15 +1,23 @@
-use shared::get_stdin;
+use shared::{run_function, FunctionType};
 
 // Reads std in as input, retrieves the fibonacci sequence and returns the last number of the
 // fibonacci sequence of the provided size
 fn main() {
-    let size: i32 = get_stdin().expect("To parse correctly");
+    let func_type = if cfg!(feature = "docker") {
+        FunctionType::Docker
+    } else {
+        FunctionType::Wasm
+    };
 
-    let sequence = fibonacci(size);
-    println!("{:?}", sequence.last().unwrap());
+    run_function(fibonacci, func_type);
 }
 
-fn fibonacci(size: i32) -> Vec<u64> {
+fn fibonacci(size: i32) -> String {
+    let sequence = compute_fibonacci(size);
+    format!("{:?}", sequence.last().unwrap_or(&0))
+}
+
+fn compute_fibonacci(size: i32) -> Vec<u64> {
     let mut sequence = Vec::<u64>::new();
 
     for i in 0..size {
@@ -21,8 +29,6 @@ fn fibonacci(size: i32) -> Vec<u64> {
             sequence.push(next_value);
         }
     }
-
-    // println!("Help me");
 
     sequence
 }
