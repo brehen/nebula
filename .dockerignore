@@ -1,0 +1,4 @@
+admin_dashboard/
+examples/
+**/target/
+**/node_modules/
