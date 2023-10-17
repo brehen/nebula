@@ -23,6 +23,7 @@ build_wasm: $(DIR_NAMES)
 	@for dir in $^; do \
 		cd $$dir; \
 		cargo build --release --target wasm32-wasi; \
+		cp target/wasm32-wasi/release/$$dir.wasm ~/projects/wasm_modules/; \
 		cd ..; \
 	done
 
