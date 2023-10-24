@@ -16,9 +16,9 @@ COPY web_server/Cargo.toml web_server/Cargo.lock ./web_server/
 
 # Dummy build to cache dependencies (this helps in faster subsequent builds)
 # Dummy build for nebula_lib
-# RUN mkdir -p nebula_lib/src && echo "fn main() {}" > nebula_lib/src/lib.rs && cargo build --manifest-path nebula_lib/Cargo.toml
+RUN mkdir -p nebula_lib/src && echo "fn main() {}" > nebula_lib/src/lib.rs && cargo build --manifest-path nebula_lib/Cargo.toml
 # # Dummy build for web_server
-# RUN mkdir -p web_server/src && echo "fn main() {}" > web_server/src/main.rs && cargo build --manifest-path web_server/Cargo.toml
+RUN mkdir -p web_server/src && echo "fn main() {}" > web_server/src/main.rs && cargo build --manifest-path web_server/Cargo.toml
 
 
 # Now, copy the actual source code and build the projects
@@ -32,8 +32,6 @@ RUN cd web_server && bun x tailwindcss -i ./styles/tailwind.css -o ./assets/main
 
 RUN cat web_server/assets/main.css
 
-# Compile css
-RUN pnpm dlx tailwindcss -i styles/tailwind.css -o assets/main.css 
 
 COPY web_server/assets ./web_server/assets
 
@@ -43,6 +41,7 @@ RUN cargo build --release --manifest-path web_server/Cargo.toml
 # Runtime Stage
 FROM debian:bullseye-slim
 COPY --from=build /usr/src/web_server/target/release/nebula_server /usr/local/bin/
+COPY --from=build /usr/src/web_server/assets /assets
 
 EXPOSE 8000
 CMD ["nebula_server"]
