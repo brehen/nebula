@@ -38,9 +38,8 @@ pub struct Params {
 }
 
 pub async fn run_wasm_module(Path(Params { module, input }): Path<Params>) -> Html<String> {
-    let input = input.as_str();
-    let file_path = get_file_path(module.as_str());
-    match wasm_runner::run_wasi_module(&file_path, input) {
+    let file_path = get_file_path(&module);
+    match wasm_runner::run_wasi_module(&file_path, &input) {
         Ok(result) => Html(format!(
             "<div><h1>{}, input: {}</h1><p>Result was: {}</p></div>",
             module, input, result.result
