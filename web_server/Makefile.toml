@@ -4,7 +4,7 @@ script = ['''
 trap "exit" INT TERM ERR
 trap "kill 0" EXIT
 
-cargo run --target aarch64-apple-darwin &
+cargo watch -x "run --target aarch64-apple-darwin" &
 pnpm dlx tailwindcss -i styles/tailwind.css -o assets/main.css --watch &
 
 wait
