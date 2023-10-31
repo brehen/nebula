@@ -8,5 +8,5 @@ pub fn get_file_path(function_name: &str) -> PathBuf {
 
     let file_name = format!("{}.wasm", function_name);
 
-    cwd.join("projects/wasm_modules/").join(file_name)
+    cwd.join("projects/modules/wasm/").join(file_name)
 }

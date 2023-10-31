@@ -77,7 +77,7 @@ struct WasmTemplate {
 }
 
 async fn wasm() -> impl IntoResponse {
-    let modules = list_files("/Users/mariuskluften/projects/wasm_modules")
+    let modules = list_files("/Users/mariuskluften/projects/modules/wasm")
         .expect("There to be modules on the server");
     let modules: Vec<String> = modules
         .iter()
