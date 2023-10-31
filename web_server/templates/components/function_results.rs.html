@@ -1,9 +1,9 @@
 {% for result in function_results %}
   <div class="bg-blue-500 rounded-xl p-2">
-    <p class="text-sm">{{ result.result }}</p>
+    <p class="text-sm">Result: {{ result.result }}</p>
     {% if let Some(metrics) = result.metrics %}
       <p>It took {{metrics.startup_time}}ms to start up and {{metrics.total_runtime}}ms in total to run.</p>
-      <div class="{% if metrics.startup_time > 150 +%} bg-red-200 {% else %} bg-green-200 {%+ endif %} p-2"></div>
+      <div class="{% if metrics.startup_time > 200 +%} bg-red-200 {% else %} bg-green-200 {%+ endif %} p-2"></div>
     {% endif %}
   </div>
 {% endfor %}

@@ -17,7 +17,6 @@ use nebula_lib::{
 use nebula_server::utilities::{get_file_path::get_file_path, run_wasm_module::run_wasm_module};
 use serde::Deserialize;
 use tower_http::services::ServeDir;
-use tower_livereload::LiveReloadLayer;
 use tracing::info;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -30,7 +29,7 @@ async fn main() -> anyhow::Result<()> {
     tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "nebula_server=debug".into()),
+                .unwrap_or_else(|_| "nebula_server=debug,tower_livereload=debug".into()),
         )
         .with(tracing_subscriber::fmt::layer())
         .init();
@@ -38,6 +37,8 @@ async fn main() -> anyhow::Result<()> {
     info!("initializing router...");
 
     let assets_path = std::env::current_dir().unwrap();
+    info!("Cwd path is: {:?}", assets_path);
+    info!("Expected assets dir is: {:?}/assets", assets_path);
     let port = 8000_u16;
     let addr = std::net::SocketAddr::from(([0, 0, 0, 0], port));
     let api_router = Router::new()
@@ -54,12 +55,13 @@ async fn main() -> anyhow::Result<()> {
         .nest("/api", api_router)
         .route("/", get(home))
         .route("/wasm", get(wasm))
+        .route("/docker", get(docker))
         .nest_service(
             "/assets",
             ServeDir::new(format!("{}/assets", assets_path.to_str().unwrap())),
         )
-        .with_state(app_state)
-        .layer(LiveReloadLayer::new());
+        .with_state(app_state);
+    //.layer(LiveReloadLayer::new());
     info!("router initialized, now listening on port {}", port);
 
     axum::Server::bind(&addr)
@@ -68,6 +70,26 @@ async fn main() -> anyhow::Result<()> {
         .context("error while starting server")?;
 
     Ok(())
+}
+
+#[derive(Template)]
+#[template(path = "pages/docker.rs.html")]
+struct DockerTemplate {
+    images: Vec<String>,
+}
+
+async fn docker() -> impl IntoResponse {
+    let images = list_files("/Users/mariuskluften/projects/modules/wasm")
+        .expect("there to be modules on the server");
+
+    let images: Vec<String> = images
+        .iter()
+        .filter_map(|path| Path::new(path).file_stem())
+        .map(|name| name.to_str().unwrap().to_string())
+        .collect();
+
+    let template = DockerTemplate { images };
+    HtmlTemplate(template)
 }
 
 #[derive(Template)]
