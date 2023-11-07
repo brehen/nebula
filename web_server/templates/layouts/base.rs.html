@@ -13,6 +13,16 @@
     {% block head %}{% endblock %}
   </head>
   <body class="bg-slate-400 ">
+    <nav class="p-4 w-full text-white">
+      <div class="container flex justify-between items-end">
+        <h1 class="text-2xl font-bold">Nebula</h1>
+        <div>
+          <a href="/wasm">Wasm</a>
+          |
+          <a href="/docker">Docker</a>
+        </div>
+      </div>
+    </nav>
     <div id="content">
       <!-- Inheriting pages will have their content rendered here, similar to app root in React, Angular, etc. -->
       {% block content %} {% endblock %}
