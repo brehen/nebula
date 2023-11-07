@@ -43,7 +43,8 @@ async fn main() -> anyhow::Result<()> {
     let addr = std::net::SocketAddr::from(([0, 0, 0, 0], port));
     let api_router = Router::new()
         .route("/wasm/:module/:input", get(run_wasm_module))
-        .route("/wasm", post(call_function));
+        .route("/wasm", post(call_function))
+        .route("/docker", post(call_function));
     //.route("/docker/:module/:input", post(todo!()))
     // .with_state(app_state);
     //
@@ -149,7 +150,7 @@ struct FCList {
     function_results: Vec<FunctionResult>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 enum ModuleType {
     Docker,
     Wasm,
@@ -166,10 +167,13 @@ async fn call_function(
     State(state): State<Arc<AppState>>,
     Form(request): Form<FunctionRequest>,
 ) -> impl IntoResponse {
-    info!("calling function: {:?}", request.function_name);
+    info!(
+        "calling function: {:?}, type: {:?}",
+        request.function_name, request.module_type
+    );
     let result: FunctionResult = match request.module_type {
         ModuleType::Docker => {
-            let docker_module = format!("brehen/{}", request.input);
+            let docker_module = format!("nebula-function-{}", request.function_name);
             run_docker_image(&docker_module, &request.input).expect("It to work")
         }
         ModuleType::Wasm => {
