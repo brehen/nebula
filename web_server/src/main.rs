@@ -1,4 +1,9 @@
-use std::{path::Path, sync::Arc};
+use clap::{arg, Parser};
+use std::{
+    net::{IpAddr, SocketAddr},
+    path::Path,
+    sync::Arc,
+};
 use tokio::sync::Mutex;
 
 use anyhow::Context;
@@ -26,6 +31,8 @@ struct AppState {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    let options = ServerOptions::parse();
+
     tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env()
@@ -39,8 +46,6 @@ async fn main() -> anyhow::Result<()> {
     let assets_path = std::env::current_dir().unwrap();
     info!("Cwd path is: {:?}", assets_path);
     info!("Expected assets dir is: {:?}/assets", assets_path);
-    let port = 8000_u16;
-    let addr = std::net::SocketAddr::from(([0, 0, 0, 0], port));
     let api_router = Router::new()
         .route("/wasm/:module/:input", get(run_wasm_module))
         .route("/wasm", post(call_function))
@@ -63,14 +68,28 @@ async fn main() -> anyhow::Result<()> {
         )
         .with_state(app_state);
     //.layer(LiveReloadLayer::new());
-    info!("router initialized, now listening on port {}", port);
+    info!(
+        "Up and running on address {}:{}!",
+        options.address, options.port
+    );
 
-    axum::Server::bind(&addr)
+    axum::Server::bind(&SocketAddr::new(options.address, options.port))
         .serve(router.into_make_service())
         .await
         .context("error while starting server")?;
 
     Ok(())
+}
+
+#[derive(Parser, Debug)]
+#[command(version, about)]
+pub struct ServerOptions {
+    /// HTTP listening address.
+    #[arg(short = 'a', long, default_value = "127.0.0.1")]
+    pub address: IpAddr,
+    /// HTTP listening port.
+    #[arg(short = 'p', long, default_value = "8080")]
+    pub port: u16,
 }
 
 #[derive(Template)]
