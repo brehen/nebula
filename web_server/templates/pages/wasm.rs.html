@@ -4,9 +4,9 @@
 {% endblock %}
 
 {% block content %}
+  <h1 class="text-white bg-slate-800 px-2 py-1 rounded-lg" style="width:fit-content; margin-left:12px;">Wasm</h1>
   <div class="p-4 gap-8 flex">
     <div class="space-y-2 flex flex-col">
-      <h1 class="text-2xl">WebAssembly</h1>
       {% for module in modules %}
         <form class='flex' hx-post="/api/wasm" hx-target="#results" hx-swap="innerHTML">
           <input
