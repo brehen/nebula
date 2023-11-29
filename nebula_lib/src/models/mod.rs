@@ -5,10 +5,17 @@ use serde::{Deserialize, Serialize};
 pub mod docker_module;
 pub mod wasm_module;
 
+#[derive(Serialize, Clone, Deserialize, Debug)]
+pub enum ModuleType {
+    Docker,
+    Wasm,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FunctionResult {
     pub metrics: Option<Metrics>,
     pub result: String,
+    pub func_type: ModuleType,
 }
 
 impl Display for FunctionResult {

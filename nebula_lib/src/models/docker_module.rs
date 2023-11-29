@@ -4,6 +4,8 @@ use std::{
     time::Instant,
 };
 
+use crate::models::ModuleType;
+
 use super::{FunctionResult, Metrics};
 
 pub struct DockerModule<Input = String, Output = Option<String>> {
@@ -80,6 +82,7 @@ impl<Input, Output> DockerModule<Input, Output> {
         Ok(FunctionResult {
             result: stdout.trim().to_string(),
             metrics,
+            func_type: ModuleType::Docker,
         })
     }
 }

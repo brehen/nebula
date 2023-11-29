@@ -4,7 +4,7 @@ use std::{
     time::{Instant, SystemTime, UNIX_EPOCH},
 };
 
-use crate::models::{FunctionResult, Metrics};
+use crate::models::{FunctionResult, Metrics, ModuleType};
 
 pub fn run_docker_image(image_name: &str, input: &str) -> Result<FunctionResult> {
     let start = Instant::now();
@@ -33,6 +33,7 @@ pub fn run_docker_image(image_name: &str, input: &str) -> Result<FunctionResult>
             startup_time: actual_startup,
             total_runtime,
         }),
+        func_type: ModuleType::Docker,
     })
 }
 

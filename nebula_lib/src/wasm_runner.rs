@@ -8,7 +8,7 @@ use wasi_common::pipe::{ReadPipe, WritePipe};
 use wasmtime::*;
 use wasmtime_wasi::sync::WasiCtxBuilder;
 
-use crate::models::{FunctionResult, Metrics};
+use crate::models::{FunctionResult, Metrics, ModuleType};
 
 pub fn run_wasi_module(path: &PathBuf, input: &str) -> Result<FunctionResult, anyhow::Error> {
     let start = Instant::now();
@@ -70,6 +70,7 @@ pub fn run_wasi_module(path: &PathBuf, input: &str) -> Result<FunctionResult, an
             total_runtime,
             startup_time,
         }),
+        func_type: ModuleType::Wasm,
     })
 }
 
