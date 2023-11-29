@@ -16,7 +16,9 @@ use axum::{
     Form, Router,
 };
 use nebula_lib::{
-    docker_runner::run_docker_image, list_files::list_files, models::FunctionResult,
+    docker_runner::run_docker_image,
+    list_files::list_files,
+    models::{FunctionResult, ModuleType},
     wasm_runner::run_wasi_module,
 };
 use nebula_server::utilities::{get_file_path::get_file_path, run_wasm_module::run_wasm_module};
@@ -167,12 +169,6 @@ where
 #[template(path = "components/function_results.rs.html")]
 struct FCList {
     function_results: Vec<FunctionResult>,
-}
-
-#[derive(Deserialize, Debug)]
-enum ModuleType {
-    Docker,
-    Wasm,
 }
 
 #[derive(Deserialize)]
