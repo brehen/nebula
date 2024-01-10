@@ -1,9 +1,38 @@
-{% for result in function_results %}
-  <div class="bg-blue-500 rounded-xl p-2">
-    <p class="text-sm">Result: {{ result.result }}</p>
-    {% if let Some(metrics) = result.metrics %}
-      <p>It took {{metrics.startup_time}}ms to start up and {{metrics.total_runtime}}ms in total to run.</p>
-      <div class="{% if metrics.startup_time > 200 +%} bg-red-200 {% else %} bg-green-200 {%+ endif %} p-2"></div>
-    {% endif %}
+{% block head %}
+  <script>
+    console.log("whaaaat {{avg_startup}}, {{function_results}}")
+  </script>
+{% endblock %}
+
+
+{% block content %}
+  <div>
+    <p>Total invocations: {{total_invocations}}</p>
+    <p>Avg start up time: {{avg_startup}} | Avg runtime: {{avg_total_time}}</p>
   </div>
-{% endfor %}
+
+  {% for result in function_results %}
+  <div class="rounded-xl p-2 {% if matches!(result.func_type, ModuleType::Docker) +%} bg-blue-500 {% else %} bg-purple-500 {%+ endif %}">
+      {% if let Some(metrics) = result.metrics %}
+        <div class="text-sm flex justify-between pb-2">
+          <p class="grid">
+            <span>Result: {{ result.result }}</span>
+            <span>Type: {% if matches!(result.func_type, ModuleType::Docker) +%} Docker {% else %} Wasm {%+ endif %}</span>
+            <span>Function: {{ result.func_name }}</span>
+          </p> 
+          <p class="grid">
+            <span class="flex justify-between gap-2">Startup: <span>{{metrics.startup_time}}ms</span></span>
+            <span class="flex justify-between gap-2">Runtime: <span>{{metrics.total_runtime - metrics.startup_time}}ms</span></span>
+            <span class="flex justify-between gap-2">Total: <span>{{metrics.total_runtime}}ms</span></span>
+          </p>
+      </div>
+        <div class="w-full flex">
+          <div class="rounded-l-full p-2 bg-red-300" style="width:{{metrics.startup_percentage}}%;"></div>
+          <div class="rounded-r-full p-2 bg-green-300" style="width:{{100.0 - metrics.startup_percentage}}%;"></div>
+        </div>
+      {% endif %}
+    </div>
+  {% endfor %}
+{% endblock %}
+
+<!-- <canvas id="myChart" width="400" height="400"></canvas> -->
