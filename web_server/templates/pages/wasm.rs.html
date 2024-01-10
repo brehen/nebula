@@ -4,7 +4,24 @@
 {% endblock %}
 
 {% block content %}
-  <h1 class="text-white bg-slate-800 px-2 py-1 rounded-lg" style="width:fit-content; margin-left:12px;">Wasm</h1>
+  <div class="flex gap-2">
+    <a href="/wasm" class="pointer-events-none">
+      <h1 
+        class="px-2 py-1 rounded-lg bg-white text-black" 
+        style="width:fit-content; margin-left:12px;"
+      >
+        Wasm
+      </h1>
+    </a>
+    <a href="/docker">
+      <h1 
+        class="text-white bg-slate-800 px-2 py-1 rounded-lg" 
+        style="width:fit-content; margin-left:12px;"
+      >
+        Docker
+      </h1>
+    </a>
+  </div>
   <div class="p-4 gap-8 flex">
     <div class="space-y-2 flex flex-col">
       {% for module in modules %}

@@ -2,7 +2,7 @@ use std::fmt::{Display, Formatter, Result};
 
 use serde::{Deserialize, Serialize};
 
-pub mod docker_module;
+// pub mod docker_module;
 pub mod wasm_module;
 
 #[derive(Serialize, Clone, Deserialize, Debug)]
@@ -16,6 +16,8 @@ pub struct FunctionResult {
     pub metrics: Option<Metrics>,
     pub result: String,
     pub func_type: ModuleType,
+    pub func_name: String,
+    pub input: String,
 }
 
 impl Display for FunctionResult {
@@ -32,6 +34,7 @@ impl Display for FunctionResult {
 pub struct Metrics {
     pub startup_time: u128,
     pub total_runtime: u128,
+    pub startup_percentage: f64,
 }
 
 impl Display for Metrics {

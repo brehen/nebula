@@ -69,8 +69,11 @@ pub fn run_wasi_module(path: &PathBuf, input: &str) -> Result<FunctionResult, an
         metrics: Some(Metrics {
             total_runtime,
             startup_time,
+            startup_percentage: ((startup_time as f64 / total_runtime as f64) * 100.0).round(),
         }),
         func_type: ModuleType::Wasm,
+        func_name: path.to_str().unwrap().to_owned(),
+        input: input.to_string(),
     })
 }
 

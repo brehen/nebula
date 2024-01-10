@@ -32,8 +32,11 @@ pub fn run_docker_image(image_name: &str, input: &str) -> Result<FunctionResult>
         metrics: Some(Metrics {
             startup_time: actual_startup,
             total_runtime,
+            startup_percentage: ((actual_startup as f64 / total_runtime as f64) * 100.0).round(),
         }),
         func_type: ModuleType::Docker,
+        func_name: image_name.to_string(),
+        input: input.to_string(),
     })
 }
 

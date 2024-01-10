@@ -75,6 +75,8 @@ impl<Input, Output> DockerModule<Input, Output> {
             true => Some(Metrics {
                 startup_time: startup_time.unwrap(),
                 total_runtime: total_runtime.unwrap(),
+                startup_percentage: (startup_time.unwrap() as f64 / total_runtime.unwrap() as f64)
+                    * 100.0,
             }),
             false => None,
         };
