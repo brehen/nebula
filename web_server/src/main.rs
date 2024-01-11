@@ -47,6 +47,7 @@ async fn main() -> anyhow::Result<()> {
     let router = Router::new()
         .nest("/api", api_router)
         .route("/", get(index::home))
+        .route("/metrics", get(metrics::metrics))
         .route("/wasm", get(wasm_page::wasm))
         .route("/docker", get(docker_page::docker))
         .nest_service(
