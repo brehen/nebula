@@ -6,7 +6,11 @@ use std::{
 
 use crate::models::{FunctionResult, Metrics, ModuleType};
 
-pub fn run_docker_image(image_name: &str, input: &str) -> Result<FunctionResult> {
+pub fn run_docker_image(
+    image_name: &str,
+    input: &str,
+    func_name: String,
+) -> Result<FunctionResult> {
     let start = Instant::now();
 
     let mut child = Command::new("docker")
@@ -35,7 +39,7 @@ pub fn run_docker_image(image_name: &str, input: &str) -> Result<FunctionResult>
             startup_percentage: ((actual_startup as f64 / total_runtime as f64) * 100.0).round(),
         }),
         func_type: ModuleType::Docker,
-        func_name: image_name.to_string(),
+        func_name,
         input: input.to_string(),
     })
 }

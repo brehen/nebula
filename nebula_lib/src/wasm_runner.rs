@@ -10,7 +10,11 @@ use wasmtime_wasi::sync::WasiCtxBuilder;
 
 use crate::models::{FunctionResult, Metrics, ModuleType};
 
-pub fn run_wasi_module(path: &PathBuf, input: &str) -> Result<FunctionResult, anyhow::Error> {
+pub fn run_wasi_module(
+    path: &PathBuf,
+    input: &str,
+    func_name: String,
+) -> Result<FunctionResult, anyhow::Error> {
     let start = Instant::now();
     // Define the WASI functions globally on the `Config`.
     let engine = Engine::default();
@@ -72,7 +76,7 @@ pub fn run_wasi_module(path: &PathBuf, input: &str) -> Result<FunctionResult, an
             startup_percentage: ((startup_time as f64 / total_runtime as f64) * 100.0).round(),
         }),
         func_type: ModuleType::Wasm,
-        func_name: path.to_str().unwrap().to_owned(),
+        func_name,
         input: input.to_string(),
     })
 }
@@ -87,7 +91,7 @@ mod tests {
     fn it_works() {
         let files = list_files("../faas_user/modules").unwrap();
         println!("{:?}", files);
-        match run_wasi_module(files.get(0).expect("to exist"), "2") {
+        match run_wasi_module(files.get(0).expect("to exist"), "2", "".to_owned()) {
             Ok(_list) => assert_eq!(2, 3),
             Err(_err) => assert_eq!(1, 2),
         }
