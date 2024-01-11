@@ -13,6 +13,7 @@ use tracing::info;
 
 use crate::utilities::{get_file_path::get_file_path, html_template::HtmlTemplate};
 
+#[derive(Debug)]
 pub struct AppState {
     pub function_calls: Mutex<Vec<FunctionResult>>,
 }
@@ -44,11 +45,12 @@ pub async fn call_function(
     let result: FunctionResult = match request.module_type {
         ModuleType::Docker => {
             let docker_module = format!("nebula-function-{}", request.function_name);
-            run_docker_image(&docker_module, &request.input).expect("It to work")
+            run_docker_image(&docker_module, &request.input, request.function_name)
+                .expect("It to work")
         }
         ModuleType::Wasm => {
             let function_path = get_file_path(&request.function_name);
-            run_wasi_module(&function_path, &request.input).expect("to work")
+            run_wasi_module(&function_path, &request.input, request.function_name).expect("to work")
         }
     };
     let mut lock = state.function_calls.lock().await;
@@ -64,7 +66,6 @@ pub async fn call_function(
         .iter()
         .map(|result| result.metrics.as_ref().unwrap().total_runtime)
         .sum();
-    println!("{:?}", function_results);
 
     let template = FCList {
         function_results,
@@ -72,6 +73,44 @@ pub async fn call_function(
         avg_startup: startup_time_sum / total_invocations as u128,
         avg_total_time: runtime_sum / total_invocations as u128,
     };
+
+    HtmlTemplate(template)
+}
+
+pub async fn get_function_results(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    info!("getting functinon results: {:?}", state);
+    let lock = state.function_calls.lock().await;
+    let function_results: Vec<FunctionResult> = lock.clone().into_iter().rev().collect();
+
+    let total_invocations = function_results.len();
+    let template;
+    if total_invocations == 0 {
+        template = FCList {
+            function_results,
+            total_invocations,
+            avg_startup: 0,
+            avg_total_time: 0,
+        }
+    } else {
+        let startup_time_sum: u128 = function_results
+            .iter()
+            .map(|result| result.metrics.as_ref().unwrap().startup_time)
+            .sum();
+        let runtime_sum: u128 = function_results
+            .iter()
+            .map(|result| result.metrics.as_ref().unwrap().total_runtime)
+            .sum();
+        println!("{:?}", function_results);
+
+        template = FCList {
+            function_results,
+            total_invocations,
+            avg_startup: startup_time_sum / total_invocations as u128,
+            avg_total_time: runtime_sum / total_invocations as u128,
+        };
+    }
+
+    println!("Template is: {:?}", template);
 
     HtmlTemplate(template)
 }
