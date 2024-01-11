@@ -13,6 +13,7 @@ use axum::{
 use nebula_server::{
     components::function_results::{call_function, get_function_results, AppState},
     pages::{docker_page, index, metrics, wasm_page},
+    utilities::persist::load_results,
 };
 use tower_http::services::ServeDir;
 use tracing::info;
@@ -39,8 +40,14 @@ async fn main() -> anyhow::Result<()> {
         .route("/results", get(get_function_results))
         .route("/wasm", post(call_function))
         .route("/docker", post(call_function));
+
+    let stored_function_calls = match load_results() {
+        Ok(func_calls) => func_calls,
+        Err(_) => vec![],
+    };
+
     let app_state = Arc::new(AppState {
-        function_calls: Mutex::new(vec![]),
+        function_calls: Mutex::new(stored_function_calls),
     });
 
     let router = Router::new()

@@ -11,7 +11,9 @@ use serde::Deserialize;
 use tokio::sync::Mutex;
 use tracing::info;
 
-use crate::utilities::{get_file_path::get_file_path, html_template::HtmlTemplate};
+use crate::utilities::{
+    get_file_path::get_file_path, html_template::HtmlTemplate, persist::save_results,
+};
 
 #[derive(Debug)]
 pub struct AppState {
@@ -57,6 +59,7 @@ pub async fn call_function(
     lock.push(result);
 
     let function_results: Vec<FunctionResult> = lock.clone().into_iter().rev().collect();
+    let _ = save_results(function_results.clone());
     let total_invocations = function_results.len();
     let startup_time_sum: u128 = function_results
         .iter()
