@@ -4,39 +4,68 @@
 {% endblock %}
 
 {% block head %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
-    document.addEventListener("DOMContentLoaded", function() { 
-    const metrics = JSON.parse("{{metrics}}".replace(/&quot;/g,'"'))
-    console.log(metrics)
-    const ctx = document.getElementById('myChart');
-    console.log(ctx)
+    document.addEventListener("DOMContentLoaded", function() {
+      const metrics = JSON.parse("{{metrics}}".replace(/&quot;/g, '"'))
 
-  new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: ['Marius', 'Neko'],
-      datasets: [{
-        label: '# of Votes',
-        data: [12, 19, 3, 5, 2, 3],
-        borderWidth: 1
-      }]
-    },
-    options: {
-      scales: {
-        y: {
-          beginAtZero: true
-        }
-      }
-    }
-  });
-    })
+      const labels = Object.keys(metrics);
+      const dockerStartupData = labels.map(label => metrics[label].docker.avg_startup_time);
+      const dockerRuntimeData = labels.map(label => metrics[label].docker.avg_runtime);
+      const dockerTotalRuntimeData = labels.map(label => metrics[label].docker.avg_total_runtime);
+      const wasmStartupData = labels.map(label => metrics[label].wasm.avg_startup_time);
+      const wasmRuntimeData = labels.map(label => metrics[label].wasm.avg_runtime);
+      const wasmTotalRuntimeData = labels.map(label => metrics[label].wasm.avg_total_runtime);
+
+
+      const ctx = document.getElementById('myChart');
+      console.log(ctx)
+
+      new Chart(ctx, {
+          type: 'line',
+          data: {
+              labels,
+              datasets: [{
+                  label: 'Wasm - Startup',
+                  data: wasmStartupData,
+                  borderWidth: 1
+              }, {
+                  label: "Docker - Startup",
+                  data: dockerStartupData,
+                  borderWidth: 1
+              }, {
+                  label: "Wasm - Runtime",
+                  data: wasmRuntimeData,
+                  borderWidth: 1
+              }, {
+                  label: "Docker - Runtime",
+                  data: dockerStartupData,
+                  borderWidth: 1
+              }, {
+                  label: "Wasm - Total",
+                  data: wasmTotalRuntimeData,
+                  borderWidth: 1
+              }, {
+                  label: "Docker - Total",
+                  data: dockerTotalRuntimeData,
+                  borderWidth: 1
+              }, ]
+          },
+          options: {
+              scales: {
+                  y: {
+                      beginAtZero: true
+                  }
+              }
+          }
+      });
+  })
   </script>
 {% endblock %}
 
 {% block content %}
   <div class="flex gap-2">
     Average startup time.
-    <canvas id="myCharts" width="400" height="400"></canvas>
+    <canvas id="myChart" width="400" height="100"></canvas>
   </div>
 {% endblock %}
