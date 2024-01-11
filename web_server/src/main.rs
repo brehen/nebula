@@ -11,9 +11,8 @@ use axum::{
     Router,
 };
 use nebula_server::{
-    components::function_results::{call_function, AppState},
-    pages::{docker_page, index, wasm_page},
-    utilities::run_wasm_module::run_wasm_module,
+    components::function_results::{call_function, get_function_results, AppState},
+    pages::{docker_page, index, metrics, wasm_page},
 };
 use tower_http::services::ServeDir;
 use tracing::info;
@@ -37,7 +36,7 @@ async fn main() -> anyhow::Result<()> {
     info!("Cwd path is: {:?}", assets_path);
     info!("Expected assets dir is: {:?}/assets", assets_path);
     let api_router = Router::new()
-        .route("/wasm/:module/:input", get(run_wasm_module))
+        .route("/results", get(get_function_results))
         .route("/wasm", post(call_function))
         .route("/docker", post(call_function));
     let app_state = Arc::new(AppState {
