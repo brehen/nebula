@@ -1,0 +1,42 @@
+{% extends "layouts/base.rs.html" %}
+{% block title %}
+  Session metrics
+{% endblock %}
+
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function() { 
+    const metrics = JSON.parse("{{metrics}}".replace(/&quot;/g,'"'))
+    console.log(metrics)
+    const ctx = document.getElementById('myChart');
+    console.log(ctx)
+
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Marius', 'Neko'],
+      datasets: [{
+        label: '# of Votes',
+        data: [12, 19, 3, 5, 2, 3],
+        borderWidth: 1
+      }]
+    },
+    options: {
+      scales: {
+        y: {
+          beginAtZero: true
+        }
+      }
+    }
+  });
+    })
+  </script>
+{% endblock %}
+
+{% block content %}
+  <div class="flex gap-2">
+    Average startup time.
+    <canvas id="myCharts" width="400" height="400"></canvas>
+  </div>
+{% endblock %}
