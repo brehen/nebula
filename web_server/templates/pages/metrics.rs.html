@@ -9,7 +9,7 @@
     document.addEventListener("DOMContentLoaded", function() {
         const metrics = JSON.parse("{{metrics}}".replace(/&quot;/g, '"'))
 
-        const labels = Object.keys(metrics);
+        const labels = Object.keys(metrics).sort();
         const dockerStartupData = labels.map(label => metrics[label].docker.avg_startup_time);
         const dockerRuntimeData = labels.map(label => metrics[label].docker.avg_runtime);
         const dockerTotalRuntimeData = labels.map(label => metrics[label].docker.avg_total_runtime);
