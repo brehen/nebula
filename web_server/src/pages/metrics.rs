@@ -1,4 +1,4 @@
-use std::{collections::HashMap, hash::Hash, sync::Arc};
+use std::{collections::HashMap, sync::Arc};
 
 use askama::Template;
 use axum::{extract::State, response::IntoResponse};
@@ -24,7 +24,6 @@ pub async fn metrics(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     let lock = state.function_calls.lock().await;
     let function_results: Vec<FunctionResult> = lock.clone().into_iter().rev().collect();
     let metricified = metricify_function_results(function_results);
-    println!("{:?}", state);
 
     let template = MetricsTemplate {
         name: "Hey there".to_string(),

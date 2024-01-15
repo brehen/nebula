@@ -81,7 +81,6 @@ pub async fn call_function(
 }
 
 pub async fn get_function_results(State(state): State<Arc<AppState>>) -> impl IntoResponse {
-    info!("getting functinon results: {:?}", state);
     let lock = state.function_calls.lock().await;
     let function_results: Vec<FunctionResult> = lock.clone().into_iter().rev().collect();
 
@@ -103,7 +102,6 @@ pub async fn get_function_results(State(state): State<Arc<AppState>>) -> impl In
             .iter()
             .map(|result| result.metrics.as_ref().unwrap().total_runtime)
             .sum();
-        println!("{:?}", function_results);
 
         template = FCList {
             function_results,
@@ -112,8 +110,6 @@ pub async fn get_function_results(State(state): State<Arc<AppState>>) -> impl In
             avg_total_time: runtime_sum / total_invocations as u128,
         };
     }
-
-    println!("Template is: {:?}", template);
 
     HtmlTemplate(template)
 }
