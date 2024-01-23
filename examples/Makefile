@@ -48,13 +48,25 @@ deploy_docker: build_docker
 		exit 1; \
 	fi
 	@for dir in $(DIR_NAMES); do \
+		echo "Deploying Docker image for $$dir"; \
 		scp $(DOCKER_HOME_PATH)/$$dir.tar.gz $(SERVER_USER)@$(SERVER_IP):$(DOCKER_DEST_PATH)/; \
-		# SSH into server and unload previous image with same name, and reload
-		ssh $(SERVER_USER)@$(SERVER_IP) "\
-			docker rmi nebula-function-$$dir || true; \
-			docker load -i $(DOCKER_DEST_PATH)/$$dir.tar.gz; \
-		"; \
-  done
+		echo "Executing SSH command to load Docker image for $$dir"; \
+		ssh $(SERVER_USER)@$(SERVER_IP) "sudo docker rmi nebula-function-$$dir || true; sudo docker load -i $(DOCKER_DEST_PATH)/$$dir.tar.gz;"; \
+	done
+
+# deploy_docker: build_docker 
+# 	@if [ "$(SERVER_USER)" = "default_user" ] || [ "$(SERVER_IP)" = "default_ip" ]; then \
+# 		echo "Please set SERVER_USER and SERVER_IP before deploying"; \
+# 		exit 1; \
+# 	fi
+# 	@for dir in $(DIR_NAMES); do \
+# 		scp $(DOCKER_HOME_PATH)/$$dir.tar.gz $(SERVER_USER)@$(SERVER_IP):$(DOCKER_DEST_PATH)/; \
+# 		# SSH into server and unload previous image with same name, and reload
+# 		ssh $(SERVER_USER)@$(SERVER_IP) "\
+# 			docker rmi nebula-function-$$dir || true; \
+# 			docker load -i $(DOCKER_DEST_PATH)/$$dir.tar.gz; \
+# 		"; \
+#   done
 
 deploy_wasm: build_wasm 
 	@if [ "$(SERVER_USER)" = "default_user" ] || [ "$(SERVER_IP)" = "default_ip" ]; then \
