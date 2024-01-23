@@ -40,11 +40,13 @@ RUN cargo build --release --manifest-path web_server/Cargo.toml
 
 # Runtime Stage
 FROM debian:bullseye-slim
+RUN apt-get update && apt-get install -y docker.io
 COPY --from=build /usr/src/web_server/target/release/nebula_server /usr/local/bin/
 COPY --from=build /usr/src/web_server/assets /assets
 
 COPY web_server/entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/entrypoint.sh
+
 ENTRYPOINT ["entrypoint.sh"]
 
 EXPOSE 8000

@@ -15,7 +15,7 @@ pub fn run_docker_image(
 
     println!("{}", image_name);
 
-    let mut child = Command::new("sudo docker")
+    let mut child = Command::new("docker")
         .args(["run", "--rm", "-i", image_name])
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
