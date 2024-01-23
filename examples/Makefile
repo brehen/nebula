@@ -1,10 +1,10 @@
 SERVER_USER ?= default_user
 SERVER_IP ?= default_ip
 
-DOCKER_HOME_PATH := ~/projects/modules/docker
+DOCKER_HOME_PATH := ~/modules/docker
 DOCKER_DEST_PATH := /home/debian/modules/docker
 
-WASM_HOME_PATH := ~/projects/modules/wasm
+WASM_HOME_PATH := ~/modules/wasm
 WASM_DEST_PATH := /home/debian/modules/wasm
 
 
