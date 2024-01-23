@@ -25,7 +25,7 @@
   <div class="p-4 gap-8 flex">
     <div class="space-y-2 flex flex-col">
       {% for module in modules %}
-        <form class='flex' hx-post="/api/wasm" hx-target="#results" hx-swap="innerHTML">
+        <form class='grid grid-cols-[1fr,200px,1fr]' hx-post="/api/wasm" hx-target="#results" hx-swap="innerHTML">
           <input
             id={{module}}
             name="input"
