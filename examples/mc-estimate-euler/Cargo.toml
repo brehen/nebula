@@ -1,5 +1,5 @@
 [package]
-name = "mc_estimate_euler"
+name = "mc-estimate-euler"
 
 version = "0.1.0"
 edition = "2021"

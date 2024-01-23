@@ -1,6 +1,5 @@
 [package]
-name = "mc_estimate_birthday_paradox"
-
+name = "mc-estimate-pi"
 version = "0.1.0"
 edition = "2021"
 
