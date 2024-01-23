@@ -12,8 +12,12 @@ pub struct DockerTemplate {
 }
 
 pub async fn docker() -> impl IntoResponse {
-    let images = list_files("/Users/mariuskluften/projects/modules/wasm")
-        .expect("there to be modules on the server");
+    let home_dir = home::home_dir().expect("Home dir not found");
+
+    let wasm_module_dir = home_dir.join("modules/wasm");
+
+    let images =
+        list_files(wasm_module_dir.to_str().unwrap()).expect("there to be modules on the server");
 
     let images: Vec<String> = images
         .iter()
