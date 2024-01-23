@@ -17,13 +17,6 @@ pub async fn wasm() -> impl IntoResponse {
 
     let wasm_module_dir = home_dir.join("modules/wasm");
 
-    let mut list_dir = Command::new("ls");
-    list_dir.current_dir(wasm_module_dir.clone());
-
-    list_dir.status().expect("Process failed");
-
-    println!();
-
     let modules =
         list_files(wasm_module_dir.to_str().unwrap()).expect("There to be modules on the server");
     let modules: Vec<String> = modules
