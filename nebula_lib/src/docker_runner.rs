@@ -13,7 +13,7 @@ pub fn run_docker_image(
 ) -> Result<FunctionResult> {
     let start = Instant::now();
 
-    let mut child = Command::new("docker")
+    let mut child = Command::new("sudo docker")
         .args(["run", "--rm", "-i", image_name])
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
