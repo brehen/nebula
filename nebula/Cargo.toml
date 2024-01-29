@@ -1,0 +1,3 @@
+[workspace]
+members = ["nebula_lib", "nebula_server"]
+resolver = "2"
