@@ -1,0 +1,57 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches: [main] # Set this to the branch you want to deploy from
+
+jobs:
+  build:
+    defaults:
+      run:
+        working-directory: ./nebula
+
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ubuntu-latest]
+
+    name: "Test nebula on ${{matrix.os}}"
+    runs-on: ${{matrix.os}}
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - run: rustup toolchain install stable --profile minimal --no-self-update
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: nebula
+
+      - run: |
+          cargo build --release
+
+      # - name: Install and compile Tailwind CSS
+      #   working-directory: ./nebula_server
+      #   run: |
+      #     npm install -g tailwindcss
+      #
+      # - name: Copy files for deployment
+      #   run: |
+      #     mkdir deploy
+      #     cp target/release/your_binary deploy/
+      #     cp assets/ deploy/
+      #
+      # # - name: Deploy to Server via SCP
+      # #   uses: appleboy/scp-action@master
+      # #   with:
+      # #     host: ${{ secrets.SERVER_IP }}
+      # #     username: ${{ secrets.SERVER_USER }}
+      # #     password: ${{ secrets.SERVER_PASSWORD }} # Use either password or key
+      # #     #key: ${{ secrets.SERVER_SSH_KEY }}
+      # #     port: 22
+      # #     source: "deploy/*"
+      # #     target: "/path/to/server/deployment/directory"
+      #
+      # # Optional: Clean up after deployment
+      # - name: Clean up
+      #   run: rm -rf deploy
