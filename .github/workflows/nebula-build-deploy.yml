@@ -23,7 +23,7 @@ jobs:
 
       - run: rustup toolchain install stable --profile minimal --no-self-update
 
-      - name: Tailwind magic
+      - name: Compile tailwind styling
         run: |
           cd nebula_server
           npm install
@@ -43,6 +43,20 @@ jobs:
           cp -r assets deploy/
           ls -l
 
+      - name: Shut down previous Nebula version
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            if systemctl is-active --quiet nebula_server.service; then
+              echo "Service is active. Stopping service..."
+              sudo systemctl stop nebula_server.service
+            else
+              echo "Service is not active. No action needed."
+            fi
+
       - name: Deploy to Server via SCP
         uses: appleboy/scp-action@master
         with:
@@ -51,8 +65,33 @@ jobs:
           # password: ${{ secrets.SERVER_PASSWORD }} # Use either password or key
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: 22
-          source: "nebula/deploy"
-          target: "/home/debian/apps/nebula"
+          source: "nebula/deploy/*"
+          target: "/home/debian/apps"
+
+      - name: Start
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            SERVICE_FILE=/etc/systemd/system/nebula_server.service
+            if [ ! -f "$SERVICE_FILE" ]; then
+              echo "Creating $SERVICE_FILE"
+              echo "[Unit]" | sudo tee $SERVICE_FILE
+              echo "Description=Nebula Server Service" | sudo tee -a $SERVICE_FILE
+              echo "After=network.target" | sudo tee -a $SERVICE_FILE
+              echo "" | sudo tee -a $SERVICE_FILE
+              echo "[Service]" | sudo tee -a $SERVICE_FILE
+              echo "ExecStart=/path/to/nebula_server" | sudo tee -a $SERVICE_FILE
+              echo "Restart=on-failure" | sudo tee -a $SERVICE_FILE
+              echo "" | sudo tee -a $SERVICE_FILE
+              echo "[Install]" | sudo tee -a $SERVICE_FILE
+              echo "WantedBy=multi-user.target" | sudo tee -a $SERVICE_FILE
+              sudo systemctl daemon-reload
+              sudo systemctl enable nebula_server.service
+            fi
+            sudo systemctl start nebula_server.service
 
       - name: Clean up
         run: rm -rf deploy
