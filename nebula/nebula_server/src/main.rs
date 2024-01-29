@@ -33,9 +33,6 @@ async fn main() -> anyhow::Result<()> {
 
     info!("initializing router...");
 
-    let assets_path = std::env::current_dir().unwrap();
-    info!("Cwd path is: {:?}", assets_path);
-    info!("Expected assets dir is: {:?}/assets", assets_path);
     let api_router = Router::new()
         .route("/results", get(get_function_results))
         .route("/wasm", post(call_function))
@@ -56,18 +53,15 @@ async fn main() -> anyhow::Result<()> {
         .route("/metrics", get(metrics::metrics))
         .route("/wasm", get(wasm_page::wasm))
         .route("/docker", get(docker_page::docker))
-        .nest_service(
-            "/assets",
-            ServeDir::new(format!("{}/assets", assets_path.to_str().unwrap())),
-        )
+        .nest_service("/assets", ServeDir::new(options.assets_path))
         .with_state(app_state);
     //.layer(LiveReloadLayer::new());
     info!(
         "Up and running on address {}:{}!",
-        options.address, options.port
+        options.host, options.port
     );
 
-    axum::Server::bind(&SocketAddr::new(options.address, options.port))
+    axum::Server::bind(&SocketAddr::new(options.host, options.port))
         .serve(router.into_make_service())
         .await
         .context("error while starting server")?;
@@ -79,9 +73,13 @@ async fn main() -> anyhow::Result<()> {
 #[command(version, about)]
 pub struct ServerOptions {
     /// HTTP listening address.
-    #[arg(short = 'a', long, default_value = "127.0.0.1")]
-    pub address: IpAddr,
+    #[arg(short = 'e', long, default_value = "127.0.0.1")]
+    pub host: IpAddr,
     /// HTTP listening port.
     #[arg(short = 'p', long, default_value = "8080")]
     pub port: u16,
+
+    /// Asset location
+    #[arg(short = 'a', long, default_value = "./assets")]
+    pub assets_path: String,
 }

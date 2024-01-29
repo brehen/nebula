@@ -18,7 +18,7 @@ script = ['''
 trap "exit" INT TERM ERR
 trap "kill 0" EXIT
 
-cargo watch -x "run -- -p 1234 -a 0.0.0.0" &
+cargo watch -x "run -- -p 1234 -e 0.0.0.0 -a ./assets" &
 bun x tailwindcss -i styles/tailwind.css -o assets/main.css --watch
 
 wait
