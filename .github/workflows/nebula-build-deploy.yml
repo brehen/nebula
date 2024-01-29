@@ -24,7 +24,7 @@ jobs:
       - run: rustup toolchain install stable --profile minimal --no-self-update
 
       - name: Tailwind magic
-        working-directory: ./nebula_server
+        working-directory: nebula_server
         run: |
           npm i -g tailwindcss
           tailwindcss -i styles/tailwind.css -o ../assets/main.css
