@@ -23,13 +23,7 @@ jobs:
 
       - run: rustup toolchain install stable --profile minimal --no-self-update
 
-      - name: Set up Node
-        uses: actions/setup-node@v2
-        with:
-          node-version: "20"
-
       - name: Tailwind magic
-        # working-directory: nebula_server
         run: |
           cd nebula_server
           npm install
@@ -42,8 +36,12 @@ jobs:
       - run: |
           cargo build --release
 
-      - name: List out contents
-        run: ls -l
+      - name: Prepare deploy
+        run: |
+          mkdir deploy
+          cp target/release/nebula_server deploy/
+          cp -r assets deploy/
+          ls -l deploy
       #
       # # - name: Deploy to Server via SCP
       # #   uses: appleboy/scp-action@master
@@ -56,6 +54,5 @@ jobs:
       # #     source: "deploy/*"
       # #     target: "/path/to/server/deployment/directory"
       #
-      # # Optional: Clean up after deployment
-      # - name: Clean up
-      #   run: rm -rf deploy
+      - name: Clean up
+        run: rm -rf deploy
