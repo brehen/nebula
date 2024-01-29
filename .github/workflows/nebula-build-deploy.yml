@@ -30,16 +30,17 @@ jobs:
       - run: |
           cargo build --release
 
-      # - name: Install and compile Tailwind CSS
-      #   working-directory: ./nebula_server
-      #   run: |
-      #     npm install -g tailwindcss
-      #
-      # - name: Copy files for deployment
-      #   run: |
-      #     mkdir deploy
-      #     cp target/release/your_binary deploy/
-      #     cp assets/ deploy/
+      - name: Install and compile Tailwind CSS
+        working-directory: ./nebula_server
+        run: |
+          npx tailwindcss -i styles/tailwind.css -o ../assets/main.css
+
+      - name: Copy files for deployment
+        run: |
+          mkdir deploy
+          cp target/release/nebula_server deploy/
+          mkdir deploy/assets
+          cp assets/* deploy/
       #
       # # - name: Deploy to Server via SCP
       # #   uses: appleboy/scp-action@master
