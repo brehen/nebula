@@ -1,4 +1,4 @@
-use std::{path::Path, process::Command};
+use std::path::Path;
 
 use askama::Template;
 use axum::response::IntoResponse;
