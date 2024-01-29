@@ -29,14 +29,9 @@ jobs:
 
       - run: |
           cargo build --release
-
-      - name: Install and compile Tailwind CSS
-        working-directory: nebula_server
-        run: |
+          cd nebula_server
           npx tailwindcss -i styles/tailwind.css -o ../assets/main.css
-
-      - name: Copy files for deployment
-        run: |
+          cd ..
           mkdir deploy
           cp target/release/nebula_server deploy/
           mkdir deploy/assets
