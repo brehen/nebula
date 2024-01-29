@@ -84,7 +84,7 @@ jobs:
               echo "After=network.target" | sudo tee -a $SERVICE_FILE
               echo "" | sudo tee -a $SERVICE_FILE
               echo "[Service]" | sudo tee -a $SERVICE_FILE
-              echo "ExecStart=/home/debian/apps/nebula/nebula_server -p 80 -e 0.0.0.0 -a /home/debian/apps/nebula/assets" | sudo tee -a $SERVICE_FILE
+              echo " ExecStart=/home/debian/apps/nebula/nebula_server -p 80 -e 0.0.0.0 -a \"/home/debian/apps/nebula/assets\"" | sudo tee -a $SERVICE_FILE
               echo "Restart=on-failure" | sudo tee -a $SERVICE_FILE
               echo "" | sudo tee -a $SERVICE_FILE
               echo "[Install]" | sudo tee -a $SERVICE_FILE
