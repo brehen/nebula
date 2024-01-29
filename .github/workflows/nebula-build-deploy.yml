@@ -41,7 +41,7 @@ jobs:
           mkdir deploy
           cp target/release/nebula_server deploy/
           cp -r assets deploy/
-          ls -l deploy
+          ls -l
 
       - name: Deploy to Server via SCP
         uses: appleboy/scp-action@master
@@ -51,7 +51,7 @@ jobs:
           # password: ${{ secrets.SERVER_PASSWORD }} # Use either password or key
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: 22
-          source: "deploy"
+          source: "nebula/deploy"
           target: "/home/debian/apps/nebula"
 
       - name: Clean up
