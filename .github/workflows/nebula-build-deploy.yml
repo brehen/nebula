@@ -29,8 +29,9 @@ jobs:
           node-version: "20"
 
       - name: Tailwind magic
-        working-directory: nebula_server
+        # working-directory: nebula_server
         run: |
+          cd nebula_server
           npm install
           npx tailwindcss -i styles/tailwind.css -o ../assets/main.css
 
