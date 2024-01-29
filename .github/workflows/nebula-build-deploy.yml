@@ -66,8 +66,8 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: 22
           source: "nebula/deploy/*"
-          target: "/home/debian/apps"
-          strip_components: 1
+          target: "/home/debian/apps/nebula"
+          strip_components: 2
 
       - name: Start
         uses: appleboy/ssh-action@master
