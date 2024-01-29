@@ -19,7 +19,7 @@ jobs:
     runs-on: ${{matrix.os}}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - run: rustup toolchain install stable --profile minimal --no-self-update
 
@@ -42,17 +42,17 @@ jobs:
           cp target/release/nebula_server deploy/
           cp -r assets deploy/
           ls -l deploy
-      #
-      # # - name: Deploy to Server via SCP
-      # #   uses: appleboy/scp-action@master
-      # #   with:
-      # #     host: ${{ secrets.SERVER_IP }}
-      # #     username: ${{ secrets.SERVER_USER }}
-      # #     password: ${{ secrets.SERVER_PASSWORD }} # Use either password or key
-      # #     #key: ${{ secrets.SERVER_SSH_KEY }}
-      # #     port: 22
-      # #     source: "deploy/*"
-      # #     target: "/path/to/server/deployment/directory"
-      #
+
+      - name: Deploy to Server via SCP
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          # password: ${{ secrets.SERVER_PASSWORD }} # Use either password or key
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: 22
+          source: "deploy/*"
+          target: "/home/debian/apps/nebula"
+
       - name: Clean up
         run: rm -rf deploy
