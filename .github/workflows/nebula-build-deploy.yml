@@ -67,7 +67,7 @@ jobs:
           port: 22
           source: "nebula/deploy/*"
           target: "/home/debian/apps"
-          strip-components: 1
+          strip_components: 1
 
       - name: Start
         uses: appleboy/ssh-action@master
