@@ -14,22 +14,22 @@ RUN bun install -g tailwindcss
 
 # Copy only what is necessary for dependency resolution
 COPY nebula_lib/Cargo.toml nebula_lib/Cargo.lock ./nebula_lib/
-COPY web_server/Cargo.toml web_server/Cargo.lock ./web_server/
-COPY web_server/Makefile.toml web_server/Makefile.toml ./web_server/
+COPY nebula_server/Cargo.toml nebula_server/Cargo.lock ./nebula_server/
+COPY nebula_server/Makefile.toml nebula_server/Makefile.toml ./nebula_server/
 
 # # Dummy build for nebula_lib
 # RUN mkdir -p nebula_lib/src && echo "fn main() {}" > nebula_lib/src/lib.rs && cargo build --manifest-path nebula_lib/Cargo.toml
-# # # Dummy build for web_server
-# RUN mkdir -p web_server/src && echo "fn main() {}" > web_server/src/main.rs && cargo build --manifest-path web_server/Cargo.toml
+# # # Dummy build for nebula_server
+# RUN mkdir -p nebula_server/src && echo "fn main() {}" > nebula_server/src/main.rs && cargo build --manifest-path nebula_server/Cargo.toml
 
 
 # Mount the source code as a volume
-VOLUME ["/usr/src/nebula_lib/src", "/usr/src/web_server/src", "/usr/src/web_server/styles", "/usr/src/web_server/templates", "/usr/src/web_server/assets"]
+VOLUME ["/usr/src/nebula_lib/src", "/usr/src/nebula_server/src", "/usr/src/nebula_server/styles", "/usr/src/nebula_server/templates", "/usr/src/nebula_server/assets"]
 
 # Expose the port the application runs on
 EXPOSE 8000
 
-#WORKDIR ./web_server
+#WORKDIR ./nebula_server
 
 # Set the command to run your application using cargo-watch for live reloading
-CMD ["sh", "-c", "cd ./web_server && cargo make run-dev"]
+CMD ["sh", "-c", "cd ./nebula_server && cargo make run-dev"]
