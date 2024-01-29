@@ -26,8 +26,8 @@ jobs:
       - name: Tailwind magic
         working-directory: nebula_server
         run: |
-          npm i -g tailwindcss
-          tailwindcss -i styles/tailwind.css -o ../assets/main.css
+          npm install
+          npx tailwindcss -i styles/tailwind.css -o ../assets/main.css
 
       - uses: Swatinem/rust-cache@v2
         with:
