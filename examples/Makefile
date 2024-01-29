@@ -32,13 +32,8 @@ build_docker: $(DIR_NAMES)
 
 
 # Pattern rule for building wasm modules
-build_wasm: $(DIR_NAMES)
-	@for dir in $^; do \
-		cd $$dir; \
-		cargo build --release --target wasm32-wasi; \
-		cp target/wasm32-wasi/release/$$dir.wasm $(WASM_HOME_PATH)/; \
-		cd ..; \
-	done
+build_wasm: 
+	cargo build --release --target wasm32-wasi
 
 deploy: deploy_docker deploy_wasm
 

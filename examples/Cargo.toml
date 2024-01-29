@@ -1,0 +1,14 @@
+[workspace]
+members = [
+  "add",
+  "exponential",
+  "factorial",
+  "fibonacci",
+  "fibonacci-recursive",
+  "mc-estimate-birthday-paradox",
+  "mc-estimate-euler",
+  "mc-estimate-pi",
+  "prime-number",
+  "shared",
+]
+resolver = "2"
