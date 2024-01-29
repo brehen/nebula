@@ -23,19 +23,21 @@ jobs:
 
       - run: rustup toolchain install stable --profile minimal --no-self-update
 
+      - name: Tailwind magic
+        working-directory: ./nebula_server
+        run: |
+          npm i -g tailwindcss
+          tailwindcss -i styles/tailwind.css -o ../assets/main.css
+
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: nebula
 
       - run: |
           cargo build --release
-          cd nebula_server
-          npx tailwindcss -i styles/tailwind.css -o ../assets/main.css
-          cd ..
-          mkdir deploy
-          cp target/release/nebula_server deploy/
-          mkdir deploy/assets
-          cp assets/* deploy/
+
+      - name: List out contents
+        run: ls -l
       #
       # # - name: Deploy to Server via SCP
       # #   uses: appleboy/scp-action@master
