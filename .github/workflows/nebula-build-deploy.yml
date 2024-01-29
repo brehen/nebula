@@ -23,6 +23,11 @@ jobs:
 
       - run: rustup toolchain install stable --profile minimal --no-self-update
 
+      - name: Set up Node
+        uses: actions/setup-node@v2
+        with:
+          node-version: "20"
+
       - name: Tailwind magic
         working-directory: nebula_server
         run: |
