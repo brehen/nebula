@@ -4,6 +4,7 @@ use std::{
     sync::Arc,
 };
 use tokio::{net::TcpListener, sync::Mutex};
+// use tower_livereload::LiveReloadLayer;
 
 use anyhow::Context;
 use axum::{
@@ -12,7 +13,7 @@ use axum::{
 };
 use nebula_server::{
     components::function_results::{call_function, get_function_results, AppState},
-    pages::{docker_page, index, metrics, wasm_page},
+    pages::{about, docker_page, index, metrics, wasm_page},
     utilities::persist::load_results,
 };
 use tower_http::services::ServeDir;
@@ -61,12 +62,14 @@ async fn main() -> anyhow::Result<()> {
     let router = Router::new()
         .nest("/api", api_router)
         .route("/", get(index::home))
+        .route("/about", get(about::about))
         .route("/metrics", get(metrics::metrics))
         .route("/wasm", get(wasm_page::wasm))
         .route("/docker", get(docker_page::docker))
         .nest_service("/assets", ServeDir::new(options.assets_path))
         .with_state(app_state);
-    //.layer(LiveReloadLayer::new());
+    // .layer(LiveReloadLayer::new());
+
     info!(
         "Up and running on address {}:{}!",
         options.host, options.port

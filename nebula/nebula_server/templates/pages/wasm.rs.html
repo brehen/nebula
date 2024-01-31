@@ -4,6 +4,7 @@
 {% endblock %}
 
 {% block content %}
+<div>
   <div class="flex gap-2">
     <a href="/wasm" class="pointer-events-none">
       <h1 
@@ -22,10 +23,10 @@
       </h1>
     </a>
   </div>
-  <div class="p-4 gap-8 flex">
+  <div class="p-4 gap-8 md:flex space-y-8 md:space-y-0">
     <div class="space-y-2 flex flex-col">
       {% for module in modules %}
-        <form class='grid grid-cols-[1fr,200px,1fr]' hx-post="/api/wasm" hx-target="#results" hx-swap="innerHTML">
+        <form class='flex' hx-post="/api/wasm" hx-target="#results" hx-swap="innerHTML">
           <input
             id={{module}}
             name="input"
@@ -40,7 +41,7 @@
               type="submit"
               class="w-full rounded-r-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
           >
-            {{ module }}
+            Submit
           </button>
         </form>
       {% endfor %}
@@ -49,12 +50,13 @@
       <div class="w-full bg-slate-100 p-2 pl-4 rounded-b-lg font-bold">
         Results
       </div>
-      <div class="text-white bg-slate-800 w-full h-full overflow-y-scroll p-4" style="max-height: 100dvh;">
+      <div class="text-white min-h-[400px] bg-slate-800 w-full h-full overflow-y-scroll p-4" style="max-height: 100dvh;">
         <div id="results" class="flex flex-col gap-2"></div>
       </div>
     </div>
   </div>
 
   <div hx-get="/api/results" hx-target="#results" hx-swap="innerHTML" hx-trigger="load"></div>
+  </div>
 
 {% endblock %}

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="h-dvh">
   <head>
     <link href="/assets/main.css" rel="stylesheet" />
     <link href="https://rsms.me/inter/inter.css" rel="stylesheet" />
@@ -7,11 +7,11 @@
     <title>{% block title %}{{ title }}{% endblock %}</title>
 
     <!-- htmx from the unpkg CDN - your mileage may vary -->
-    <script src="/assets/htmx.min.js"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <!-- Allow any inheriting page to extend head with additional assets -->
     {% block head %}{% endblock %}
   </head>
-  <body class="bg-slate-400 ">
+  <body class="bg-slate-400 h-dvh flex flex-col">
     <nav class="p-4 w-full text-white">
       <div class="container flex justify-between items-end">
         <a class="text-2xl font-bold" href="/">Nebula</a>
@@ -21,13 +21,16 @@
           <a href="/docker">Docker</a>
           |
           <a href="/metrics">Metrics</a>
+          |
+          <a href="/about">About</a>
         </div>
       </div>
     </nav>
-    <div id="content">
+    <main id="content">
       <!-- Inheriting pages will have their content rendered here, similar to app root in React, Angular, etc. -->
       {% block content %} {% endblock %}
-    </div>
+    </main>
+    {% include "components/footer.html" %}
   </body>
 </html>
 
