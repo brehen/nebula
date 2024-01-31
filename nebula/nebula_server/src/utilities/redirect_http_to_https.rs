@@ -7,6 +7,7 @@ use axum::{
     response::Redirect,
     BoxError,
 };
+use tokio::net::TcpListener;
 
 #[derive(Clone, Copy)]
 pub struct Ports {
@@ -41,8 +42,8 @@ pub async fn redirect_http_to_https(ports: Ports) {
     };
 
     let addr = SocketAddr::from(([127, 0, 0, 1], ports.http));
-    axum::Server::bind(&addr)
-        .serve(redirect.into_make_service())
+    let listener = TcpListener::bind(&addr).await.unwrap();
+    axum::serve(listener, redirect.into_make_service())
         .await
         .unwrap();
 }
