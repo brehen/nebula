@@ -3,7 +3,7 @@ use std::{
     net::{IpAddr, SocketAddr},
     sync::Arc,
 };
-use tokio::sync::Mutex;
+use tokio::{net::TcpListener, sync::Mutex};
 
 use anyhow::Context;
 use axum::{
@@ -72,8 +72,11 @@ async fn main() -> anyhow::Result<()> {
         options.host, options.port
     );
 
-    axum::Server::bind(&SocketAddr::new(options.host, options.port))
-        .serve(router.into_make_service())
+    let listener = TcpListener::bind(&SocketAddr::new(options.host, options.port))
+        .await
+        .unwrap();
+
+    axum::serve(listener, router.into_make_service())
         .await
         .context("error while starting server")?;
 
