@@ -76,10 +76,10 @@ async fn main() -> anyhow::Result<()> {
 
     axum::Server::bind(&SocketAddr::new(
         options.host,
-        if options.in_production {
-            ports.https
-        } else {
+        if cfg!(debug_assertions) {
             ports.http
+        } else {
+            ports.https
         },
     ))
     .serve(router.into_make_service())
@@ -102,8 +102,4 @@ pub struct ServerArgs {
     /// Asset location
     #[arg(short = 'a', long, default_value = "./assets")]
     pub assets_path: String,
-
-    /// In production?
-    #[arg(long, action)]
-    pub in_production: bool,
 }
