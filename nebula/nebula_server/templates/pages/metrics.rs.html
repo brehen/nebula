@@ -6,9 +6,8 @@
 {% block head %}
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const metrics = JSON.parse("{{metrics}}".replace(/&quot;/g, '"'))
-
+    
+    function setCharts(metrics) {
         const labels = Object.keys(metrics).sort();
         const dockerStartupData = labels.map(label => metrics[label].docker.avg_startup_time);
         const dockerRuntimeData = labels.map(label => metrics[label].docker.avg_runtime);
@@ -37,6 +36,7 @@
                 }]
             },
         });
+
         new Chart(avgRuntimeCtx, {
             type: 'line',
             data: {
@@ -52,6 +52,7 @@
                 }, ]
             },
         });
+
         new Chart(avgTotalTimeCtx, {
             type: 'line',
             data: {
@@ -67,30 +68,65 @@
                 }, ]
             },
         });
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        const metrics = JSON.parse("{{metrics}}".replace(/&quot;/g, '"'))
+        const metricsG = JSON.parse("{{metrics_grouped_by_input}}".replace(/&quot;/g, '"'))
+
+        setCharts(metrics)
+
+        const selectElement = document.getElementById('input-value-select')
+
+        selectElement.addEventListener('change', function() {
+          const selectedValue = this.value;
+
+          let newMetrics = selectedValue === "" ? metrics : metricsG[selectedValue]
+
+          const charts = document.getElementsByTagName("canvas")
+          Array.from(charts).forEach((chart) => {
+            Chart.getChart(chart.id).destroy()
+          })
+          setCharts(newMetrics)
+        })
     })
   </script>
 {% endblock %}
 
 {% block content %}
-  <h1 class="text-4xl ml-4">Metric data</h1>
-  <div class="grid grid-cols-2 gap-8 p-4">
-    <div class="flex flex-col gap-2">
-      <h2 class="text-2xl">Average startup time</h2>
-      <div class="bg-white rounded-xl p-4">
-        <canvas id="avgStartupChart" width="auto" height="200"></canvas>
+  <section class='w-full'>
+
+    <div class="flex items-center justify-end gap-4 pr-4">
+      <label class="text-white ">
+        Group by input:
+      </label>
+      <select name="input_value" id="input-value-select" class="rounded-lg">
+        <option value="">--Please select--</option>
+        <option value="12">12</option>
+        <option value="13">13</option>
+      </select>
+    </div>
+        
+    <h1 class="text-4xl ml-4 text-white">Metric data</h1>
+    <div class="grid grid-cols-2 gap-8 p-4 text-white">
+      <div class="flex flex-col gap-2">
+        <h2 class="text-2xl">Average startup time</h2>
+        <div class="bg-white rounded-xl p-4">
+          <canvas id="avgStartupChart" width="auto" height="200"></canvas>
+        </div>
+      </div>
+      <div class="flex flex-col gap-2">
+        <h2 class="text-2xl">Average runtime</h2>
+        <div class="bg-white rounded-xl p-4">
+          <canvas id="avgRuntimeChart" width="auto" height="200"></canvas>
+        </div>
+      </div>
+      <div class="flex flex-col gap-2">
+        <h2 class="text-2xl">Average total time</h2>
+        <div class="bg-white rounded-xl p-4">
+          <canvas id="avgTotalTimeChart" width="auto" height="200"></canvas>
+        </div>
       </div>
     </div>
-    <div class="flex flex-col gap-2">
-      <h2 class="text-2xl">Average runtime</h2>
-      <div class="bg-white rounded-xl p-4">
-        <canvas id="avgRuntimeChart" width="auto" height="200"></canvas>
-      </div>
-    </div>
-    <div class="flex flex-col gap-2">
-      <h2 class="text-2xl">Average total time</h2>
-      <div class="bg-white rounded-xl p-4">
-        <canvas id="avgTotalTimeChart" width="auto" height="200"></canvas>
-      </div>
-    </div>
-  </div>
+  </section>
 {% endblock %}
