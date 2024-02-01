@@ -4,6 +4,7 @@ use std::{
     sync::Arc,
 };
 use tokio::{net::TcpListener, sync::Mutex};
+use tower_livereload::LiveReloadLayer;
 // use tower_livereload::LiveReloadLayer;
 
 use anyhow::Context;
@@ -59,7 +60,7 @@ async fn main() -> anyhow::Result<()> {
         function_calls: Mutex::new(stored_function_calls),
     });
 
-    let router = Router::new()
+    let mut router = Router::new()
         .nest("/api", api_router)
         .route("/", get(index::home))
         .route("/about", get(about::about))
@@ -68,7 +69,12 @@ async fn main() -> anyhow::Result<()> {
         .route("/docker", get(docker_page::docker))
         .nest_service("/assets", ServeDir::new(options.assets_path))
         .with_state(app_state);
-    // .layer(LiveReloadLayer::new());
+
+    #[cfg(debug_assertions)]
+    {
+        info!("in that place");
+        router = router.layer(LiveReloadLayer::new());
+    }
 
     info!(
         "Up and running on address {}:{}!",
