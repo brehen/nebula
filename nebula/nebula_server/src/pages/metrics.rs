@@ -1,11 +1,10 @@
 use std::{collections::HashMap, sync::Arc};
 
+use crate::{components::function_results::AppState, utilities::html_template::HtmlTemplate};
 use askama::Template;
 use axum::{extract::State, response::IntoResponse};
 use nebula_lib::models::{FunctionResult, ModuleType};
 use serde::Serialize;
-
-use crate::{components::function_results::AppState, utilities::html_template::HtmlTemplate};
 
 #[derive(Serialize, Debug)]
 pub struct MetricData {
@@ -18,16 +17,22 @@ pub struct MetricData {
 pub struct MetricsTemplate {
     pub name: String,
     pub metrics: String,
+    pub metrics_grouped_by_input: String,
+    pub input_options: Vec<String>,
 }
 
 pub async fn metrics(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     let lock = state.function_calls.lock().await;
     let function_results: Vec<FunctionResult> = lock.clone().into_iter().rev().collect();
-    let metricified = metricify_function_results(function_results);
+    let metricified = metricify_function_results(function_results.clone());
+
+    let grouped_by = group_by_input_value(function_results);
 
     let template = MetricsTemplate {
         name: "Hey there".to_string(),
         metrics: serde_json::to_string(&metricified).unwrap(),
+        metrics_grouped_by_input: serde_json::to_string(&grouped_by).unwrap(),
+        input_options: grouped_by.keys().cloned().collect(),
     };
     HtmlTemplate(template)
 }
@@ -45,6 +50,59 @@ struct NestedAggregated {
     wasm: Aggregated,
 }
 
+fn group_by_input_value(
+    func_results: Vec<FunctionResult>,
+) -> HashMap<String, HashMap<String, NestedAggregated>> {
+    // Assuming `input_value` is part of FunctionResult now
+    let mut aggregation: HashMap<(String, String, String), (u128, u128, u128, u32)> =
+        HashMap::new();
+
+    for result in func_results.into_iter() {
+        let module_type = match result.func_type {
+            ModuleType::Docker => "docker",
+            ModuleType::Wasm => "wasm",
+        }
+        .to_string();
+
+        let key = (result.func_name, module_type, result.input);
+        let entry = aggregation.entry(key).or_insert_with(|| (0, 0, 0, 0));
+        if let Some(metrics) = result.metrics {
+            entry.0 += metrics.startup_time;
+            entry.1 += metrics.total_runtime - metrics.startup_time;
+            entry.2 += metrics.total_runtime;
+            entry.3 += 1;
+        }
+    }
+
+    let mut result: HashMap<String, HashMap<String, NestedAggregated>> = HashMap::new();
+
+    for (
+        (func_name, module_type, input_value),
+        (sum_startup, sum_runtime, sum_total_runtime, count),
+    ) in aggregation
+    {
+        let avg_result = Aggregated {
+            avg_startup_time: sum_startup as f64 / count as f64,
+            avg_runtime: sum_runtime as f64 / count as f64,
+            avg_total_runtime: sum_total_runtime as f64 / count as f64,
+        };
+
+        let nested_aggregated = result
+            .entry(input_value)
+            .or_default()
+            .entry(func_name)
+            .or_default();
+
+        match module_type.as_str() {
+            "wasm" => nested_aggregated.wasm = avg_result,
+            "docker" => nested_aggregated.docker = avg_result,
+            _ => {}
+        }
+    }
+
+    result
+}
+
 fn metricify_function_results(
     func_results: Vec<FunctionResult>,
 ) -> HashMap<String, NestedAggregated> {
@@ -56,9 +114,11 @@ fn metricify_function_results(
         } else {
             "wasm".to_owned()
         };
+
         let key = (result.func_name, module_type);
         let entry = aggregation.entry(key).or_insert((0, 0, 0, 0));
         let metrics = result.metrics.unwrap();
+
         entry.0 += metrics.startup_time;
         entry.1 += metrics.total_runtime - metrics.startup_time;
         entry.2 += metrics.total_runtime;
@@ -77,7 +137,7 @@ fn metricify_function_results(
         };
         nested_result
             .entry(func_name)
-            .or_insert_with(HashMap::new)
+            .or_default()
             .insert(func_type, avg_result);
     }
 
