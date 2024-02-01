@@ -85,9 +85,8 @@ pub async fn get_function_results(State(state): State<Arc<AppState>>) -> impl In
     let function_results: Vec<FunctionResult> = lock.clone().into_iter().rev().collect();
 
     let total_invocations = function_results.len();
-    let template;
-    if total_invocations == 0 {
-        template = FCList {
+    let template = if total_invocations == 0 {
+        FCList {
             function_results,
             total_invocations,
             avg_startup: 0,
@@ -103,13 +102,13 @@ pub async fn get_function_results(State(state): State<Arc<AppState>>) -> impl In
             .map(|result| result.metrics.as_ref().unwrap().total_runtime)
             .sum();
 
-        template = FCList {
+        FCList {
             function_results,
             total_invocations,
             avg_startup: startup_time_sum / total_invocations as u128,
             avg_total_time: runtime_sum / total_invocations as u128,
-        };
-    }
+        }
+    };
 
     HtmlTemplate(template)
 }
