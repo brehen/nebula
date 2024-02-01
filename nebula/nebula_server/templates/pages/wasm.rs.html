@@ -5,19 +5,18 @@
 
 {% block content %}
 <div>
-  <div class="flex gap-2">
+  <div class="flex pl-4">
     <a href="/wasm" class="pointer-events-none">
       <h1 
-        class="px-2 py-1 rounded-lg bg-white text-black" 
-        style="width:fit-content; margin-left:12px;"
+        class="px-2 py-1 rounded-l-lg bg-blue-700 text-white border-2 border-blue-200" 
       >
         Wasm
       </h1>
     </a>
     <a href="/docker">
       <h1 
-        class="text-white bg-slate-800 px-2 py-1 rounded-lg" 
-        style="width:fit-content; margin-left:12px;"
+        class="px-2 py-1 bg-white rounded-r-lg border-2 border-blue-200" 
+        style="border-left: none;"
       >
         Docker
       </h1>
@@ -47,7 +46,7 @@
       {% endfor %}
       </div>
     <div class="w-full bg-white rounded-lg relative overflow-hidden overflow-y-scroll" style="max-height: 100dvh;">
-      <div class="w-full bg-black text-white p-2 pl-4 rounded-t-lg font-bold">
+      <div class="w-full bg-slate-300 p-2 pl-4 rounded-t-lg font-bold">
         Results
       </div>
       <div class="min-h-[400px] bg-slate-200 w-full h-full overflow-y-scroll p-4" style="max-height: 100dvh;">
