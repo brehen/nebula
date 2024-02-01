@@ -3,18 +3,14 @@
   <head>
     <link href="/assets/main.css" rel="stylesheet" />
     <link href="https://rsms.me/inter/inter.css" rel="stylesheet" />
-    <!-- Allow any inheriting page to set it's own title -->
     <title>{% block title %}{{ title }}{% endblock %}</title>
 
-    <!-- htmx from the unpkg CDN - your mileage may vary -->
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
-    <!-- Allow any inheriting page to extend head with additional assets -->
     {% block head %}{% endblock %}
   </head>
-  <body class="bg-slate-400 h-dvh flex flex-col">
-    <main id="content">
-      <!-- Inheriting pages will have their content rendered here, similar to app root in React, Angular, etc. -->
+  <body class="bg-slate-800 h-dvh flex flex-col items-center">
     {% include "components/header.html" %}
+    <main id="content" class="w-full max-w-7xl">
       {% block content %} {% endblock %}
     </main>
     {% include "components/footer.html" %}
