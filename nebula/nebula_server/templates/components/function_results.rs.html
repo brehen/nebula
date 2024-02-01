@@ -4,11 +4,11 @@
 </div>
 
 {% for result in function_results %}
-<div class="rounded-xl p-2 {% if matches!(result.func_type, ModuleType::Docker) +%} bg-blue-500 {% else %} bg-purple-500 {%+ endif %}">
+<div class="text-white rounded-xl p-2 {% if matches!(result.func_type, ModuleType::Docker) +%} bg-blue-800 {% else %} bg-purple-800 {%+ endif %}">
     {% if let Some(metrics) = result.metrics %}
       <div class="text-sm flex justify-between pb-2">
         <p class="grid">
-          <span>Result: {{ result.result }}</span>
+          <span>Input: {{result.input}} => Result: {{ result.result }}</span>
           <span>Type: {% if matches!(result.func_type, ModuleType::Docker) +%} Docker {% else %} Wasm {%+ endif %}</span>
           <span>Function: {{ result.func_name }}</span>
         </p> 
