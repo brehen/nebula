@@ -1,10 +1,39 @@
 {% extends "layouts/base.rs.html" %}
 {% block title %}
-  About
+  About Nebula
 {% endblock %}
 {% block content %}
-  <h1 class="text-4xl ml-4">About</h1>
-  <div class="grid grid-cols-2 gap-8 p-4">
-    About the project: Info coming
-  </div>
+  <section class="prose text-white mx-auto pt-24">
+    <h1 class="text-white">About Nebula</h1>
+    <p>
+      Nebula is a full stack application meant to replicate the mechanics 
+      of a Functions-as-a-Service platform. The idea is that users "deploy" 
+      the functions they want to run as WebAssembly binaries onto the platform, 
+      and then call them with a input and receive an output. 
+    </p>
+    <p>
+      This project is mainly used as a playground for experimenting with functions 
+      run as WebAssembly modules versus the same function (and code) wrapped in 
+      a docker image. In order to make a fair assessment, both versions are treated 
+      as standalone programs that I feed input as stdin and read the result as 
+      stdout. The results will be compiled into findings for my Master Thesis that is 
+      due this spring. 
+    </p>
+    <p>
+      
+    </p>
+
+    <h2 class="text-white">The stack ✊</h2>
+    <p>
+      <b>Backend</b>: Rust, Axum, WasmTime (Wasm runtime), Docker & Askama. 
+      Running on Debian 12.
+    </p>
+    <p>
+      <b>Frontend</b>: htmx 🦀🔪, vanilla JS & TailwindCSS
+    </p>
+
+    <h2 class="text-white">Made by:</h2>
+    <img src="/assets/neko-punk.png" class="h-64"/>
+
+  </section>
 {% endblock %}
