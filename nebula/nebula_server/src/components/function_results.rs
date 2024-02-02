@@ -116,25 +116,54 @@ pub async fn get_function_results(State(state): State<Arc<AppState>>) -> impl In
     let template = if total_invocations == 0 {
         FCList {
             function_results,
-            total_invocations,
-            avg_startup: 0,
-            avg_total_time: 0,
+            total_wasm_invocations: 0,
+            total_docker_invocations: 0,
+            avg_wasm_startup: 0,
+            avg_docker_startup: 0,
+            avg_wasm_total_time: 0,
+            avg_docker_total_time: 0,
         }
     } else {
-        let startup_time_sum: u128 = function_results
+        let wasm_results: Vec<FunctionResult> = function_results
+            .clone()
+            .into_iter()
+            .filter(|result| matches!(result.func_type, ModuleType::Wasm))
+            .collect();
+
+        let total_wasm_invocations = wasm_results.len();
+        let wasm_startup_times: u128 = wasm_results
             .iter()
             .map(|result| result.metrics.as_ref().unwrap().startup_time)
             .sum();
-        let runtime_sum: u128 = function_results
+        let wasm_runtime_sum: u128 = wasm_results
+            .iter()
+            .map(|result| result.metrics.as_ref().unwrap().total_runtime)
+            .sum();
+
+        let docker_results: Vec<FunctionResult> = function_results
+            .clone()
+            .into_iter()
+            .filter(|result| matches!(result.func_type, ModuleType::Docker))
+            .collect();
+
+        let total_docker_invocations = docker_results.len();
+        let docker_startup_times: u128 = docker_results
+            .iter()
+            .map(|result| result.metrics.as_ref().unwrap().startup_time)
+            .sum();
+        let docker_runtime_sum: u128 = docker_results
             .iter()
             .map(|result| result.metrics.as_ref().unwrap().total_runtime)
             .sum();
 
         FCList {
             function_results,
-            total_invocations,
-            avg_startup: startup_time_sum / total_invocations as u128,
-            avg_total_time: runtime_sum / total_invocations as u128,
+            total_wasm_invocations,
+            total_docker_invocations,
+            avg_wasm_startup: wasm_startup_times / total_wasm_invocations as u128,
+            avg_docker_startup: docker_startup_times / total_wasm_invocations as u128,
+            avg_wasm_total_time: wasm_runtime_sum / total_wasm_invocations as u128,
+            avg_docker_total_time: docker_runtime_sum / total_wasm_invocations as u128,
         }
     };
 

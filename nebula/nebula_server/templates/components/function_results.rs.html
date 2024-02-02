@@ -1,7 +1,5 @@
-<div>
-  <p>Total invocations: {{total_invocations}}</p>
-  <p>Avg start up time: {{avg_startup}} | Avg runtime: {{avg_total_time}}</p>
-</div>
+<p class="grid grid-cols-[100px,1fr,1fr,1fr]"><b>Wasm:</b> <span>Total invocations: {{total_wasm_invocations}} </span> <span>Avg start up time: {{avg_wasm_startup}}</span> <span>Avg runtime: {{avg_wasm_total_time}}</span></p>
+<p class="grid grid-cols-[100px,1fr,1fr,1fr]"><b>Docker:</b> <span>Total invocations: {{total_docker_invocations}} </span> <span>Avg start up time: {{avg_docker_startup}}</span> <span>Avg runtime: {{avg_docker_total_time}}</span></p>
 
 {% for result in function_results %}
 <div class="text-white rounded-xl p-2 {% if matches!(result.func_type, ModuleType::Docker) +%} bg-blue-800 {% else %} bg-purple-800 {%+ endif %}">
