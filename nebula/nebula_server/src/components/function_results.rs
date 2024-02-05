@@ -32,11 +32,17 @@ struct FCList {
     avg_docker_total_time: u128,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct FunctionRequest {
     function_name: String,
     input: String,
     module_type: ModuleType,
+    #[serde(default = "default_num_calls")]
+    num_calls: u8,
+}
+
+fn default_num_calls() -> u8 {
+    1
 }
 
 pub async fn call_function(
@@ -44,22 +50,33 @@ pub async fn call_function(
     Form(request): Form<FunctionRequest>,
 ) -> impl IntoResponse {
     info!(
-        "calling function: {:?}, type: {:?}",
-        request.function_name, request.module_type
+        "calling function: {:?}, type: {:?}, {} times",
+        request.function_name, request.module_type, request.num_calls
     );
-    let result: FunctionResult = match request.module_type {
-        ModuleType::Docker => {
-            let docker_module = format!("nebula-function-{}", request.function_name);
-            run_docker_image(&docker_module, &request.input, request.function_name)
-                .expect("It to work")
-        }
-        ModuleType::Wasm => {
-            let function_path = get_file_path(&request.function_name);
-            run_wasi_module(&function_path, &request.input, request.function_name).expect("to work")
-        }
-    };
+
+    let mut results = Vec::new();
+
+    for _ in 0..request.num_calls {
+        let req = request.clone();
+        let result: FunctionResult = match request.module_type {
+            ModuleType::Docker => {
+                let docker_module = format!("nebula-function-{}", req.function_name);
+                run_docker_image(&docker_module, &req.input, req.function_name).expect("It to work")
+            }
+            ModuleType::Wasm => {
+                let function_path = get_file_path(&req.function_name);
+                run_wasi_module(&function_path, &req.input, req.function_name).expect("to work")
+            }
+        };
+
+        results.push(result);
+    }
+
     let mut lock = state.function_calls.lock().await;
-    lock.push(result);
+
+    for result in results {
+        lock.push(result);
+    }
 
     let function_results: Vec<FunctionResult> = lock.clone().into_iter().rev().collect();
     let _ = save_results(function_results.clone());
