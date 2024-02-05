@@ -1,5 +1,19 @@
-<p class="grid grid-cols-[100px,1fr,1fr,1fr]"><b>Wasm:</b> <span>Total invocations: {{total_wasm_invocations}} </span> <span>Avg start up time: {{avg_wasm_startup}}</span> <span>Avg runtime: {{avg_wasm_total_time}}</span></p>
-<p class="grid grid-cols-[100px,1fr,1fr,1fr]"><b>Docker:</b> <span>Total invocations: {{total_docker_invocations}} </span> <span>Avg start up time: {{avg_docker_startup}}</span> <span>Avg runtime: {{avg_docker_total_time}}</span></p>
+<p>
+  <b>Wasm: </b> 
+  <span class="grid grid-cols-3">
+    <span># calls: {{total_wasm_invocations}}</span>
+    <span>avg startup: {{avg_wasm_startup}}</span>
+    <span>avg runtime: {{avg_wasm_total_time}}</span>
+  </span>
+</p>
+<p>
+  <b>Docker:</b> 
+  <span class="grid grid-cols-3">
+    <span># calls: {{total_docker_invocations}} </span> 
+    <span>avg startup: {{avg_docker_startup}}</span>
+    <span>avg runtime: {{avg_docker_total_time}}</span>
+  </span>
+</p>
 
 {% for result in function_results %}
 <div class="text-white rounded-xl p-2 {% if matches!(result.func_type, ModuleType::Docker) +%} bg-blue-800 {% else %} bg-purple-800 {%+ endif %}">
