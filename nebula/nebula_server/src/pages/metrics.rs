@@ -1,3 +1,4 @@
+use itertools::Itertools;
 use std::{collections::HashMap, sync::Arc};
 
 use crate::{components::function_results::AppState, utilities::html_template::HtmlTemplate};
@@ -18,7 +19,7 @@ pub struct MetricsTemplate {
     pub name: String,
     pub metrics: String,
     pub metrics_grouped_by_input: String,
-    pub input_options: Vec<String>,
+    pub input_options: Vec<u128>,
 }
 
 pub async fn metrics(State(state): State<Arc<AppState>>) -> impl IntoResponse {
@@ -27,12 +28,18 @@ pub async fn metrics(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     let metricified = metricify_function_results(function_results.clone());
 
     let grouped_by = group_by_input_value(function_results);
+    let input_options: Vec<String> = grouped_by.keys().cloned().collect();
+    let sorted_options: Vec<u128> = input_options
+        .iter()
+        .map(|x| x.parse::<u128>().unwrap())
+        .sorted()
+        .collect();
 
     let template = MetricsTemplate {
         name: "Hey there".to_string(),
         metrics: serde_json::to_string(&metricified).unwrap(),
         metrics_grouped_by_input: serde_json::to_string(&grouped_by).unwrap(),
-        input_options: grouped_by.keys().cloned().collect(),
+        input_options: sorted_options,
     };
     HtmlTemplate(template)
 }
@@ -81,6 +88,7 @@ fn group_by_input_value(
         (sum_startup, sum_runtime, sum_total_runtime, count),
     ) in aggregation
     {
+        println!("{:?}, {:?}", func_name, count);
         let avg_result = Aggregated {
             avg_startup_time: sum_startup as f64 / count as f64,
             avg_runtime: sum_runtime as f64 / count as f64,
