@@ -8,13 +8,15 @@
   <script>
     
     function setCharts(metrics) {
-        const labels = Object.keys(metrics).sort();
+        let labels = Object.keys(metrics).sort();
         const dockerStartupData = labels.map(label => metrics[label].docker.avg_startup_time);
         const dockerRuntimeData = labels.map(label => metrics[label].docker.avg_runtime);
         const dockerTotalRuntimeData = labels.map(label => metrics[label].docker.avg_total_runtime);
         const wasmStartupData = labels.map(label => metrics[label].wasm.avg_startup_time);
         const wasmRuntimeData = labels.map(label => metrics[label].wasm.avg_runtime);
         const wasmTotalRuntimeData = labels.map(label => metrics[label].wasm.avg_total_runtime);
+
+        labels = labels.map(label => label.split('').slice(0,4).join(''));
 
 
         const avgStartupCtx = document.getElementById('avgStartupChart');
@@ -94,7 +96,7 @@
 {% endblock %}
 
 {% block content %}
-  <section class='w-full'>
+  <section class='w-full py-8 md:p-12'>
 
     <div class="flex items-center justify-end gap-4 pr-4">
       <label class="text-white ">
@@ -108,7 +110,7 @@
     </div>
         
     <h1 class="text-4xl ml-4 text-white">Metric data</h1>
-    <div class="grid grid-cols-2 gap-8 p-4 text-white">
+    <div class="grid md:grid-cols-2 gap-8 p-4 text-white">
       <div class="flex flex-col gap-2">
         <h2 class="text-2xl">Average startup time</h2>
         <div class="bg-white rounded-xl p-4">
