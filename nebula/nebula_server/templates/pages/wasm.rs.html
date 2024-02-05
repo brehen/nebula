@@ -26,26 +26,28 @@
       <div class="flex md:flex-col gap-4">
         <div class="space-y-2 flex flex-col">
           {% for module in modules %}
-            <form class='flex' hx-post="/api/wasm" hx-target="#results" hx-swap="innerHTML">
+            <form hx-post="/api/wasm" hx-target="#results" hx-swap="innerHTML" class="flex w-full">
               <input
                 id={{module}}
                 name="input"
                 placeholder={{module}}
                 type="text"
-                class="rounded-l-md"
+                class="rounded-l-md flex-1"
               />
 
               <input type="text" name="function_name" class="hidden" value="{{module}}" />
               <input type="text" name="module_type" class="hidden" value="Wasm" />
               <button
                   type="submit"
-                  class="w-full rounded-r-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                  class="w-fit rounded-r-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
               >
                 Submit
               </button>
             </form>
           {% endfor %}
-          {% include "components/function_instructions.html" %}
+          <div class="pt-4">
+            {% include "components/function_instructions.html" %}
+          </div>
         </div>
       </div>
       <div class="w-full bg-white rounded-lg relative overflow-hidden overflow-y-scroll" style="max-height: 100dvh;">
