@@ -104,8 +104,9 @@
       </label>
       <select name="input_value" id="input-value-select" class="rounded-lg">
         <option value="">--Please select--</option>
-        <option value="12">12</option>
-        <option value="13">13</option>
+        {% for option in input_options %}
+          <option value="{{option}}">{{option}}</option>
+        {% endfor %}
       </select>
     </div>
         
