@@ -5,7 +5,7 @@
 {% endblock %}
 
 {% block content %}
-  <div class="">
+  <section>
     <div class="flex pl-4">
       <a href="/wasm" >
         <h1 
@@ -23,7 +23,7 @@
         </h1>
       </a>
     </div>
-    <div class="p-4 gap-8 flex">
+    <div class="p-4 gap-8 md:flex space-y-8 md:space-y-0">
       <div class="space-y-2 flex flex-col">
         {% for module in images %}
           <form class='flex' hx-post="/api/docker" hx-target="#results" hx-swap="innerHTML">
@@ -57,4 +57,5 @@
       </div>
     </div>
     <div hx-get="/api/results" hx-target="#results" hx-swap="innerHTML" hx-trigger="load"></div>
+  </section>
 {% endblock %}
