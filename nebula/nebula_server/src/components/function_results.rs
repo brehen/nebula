@@ -126,9 +126,9 @@ fn get_fc_list(function_results: Vec<FunctionResult>) -> FCList {
             total_wasm_invocations,
             total_docker_invocations,
             avg_wasm_startup: wasm_startup_times / total_wasm_invocations as u128,
-            avg_docker_startup: docker_startup_times / total_wasm_invocations as u128,
+            avg_docker_startup: docker_startup_times / total_docker_invocations as u128,
             avg_wasm_total_time: wasm_runtime_sum / total_wasm_invocations as u128,
-            avg_docker_total_time: docker_runtime_sum / total_wasm_invocations as u128,
+            avg_docker_total_time: docker_runtime_sum / total_docker_invocations as u128,
         }
     };
 
