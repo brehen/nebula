@@ -1,7 +1,7 @@
 use itertools::Itertools;
 use std::{collections::HashMap, sync::Arc};
 
-use crate::{components::function_results::AppState, utilities::html_template::HtmlTemplate};
+use crate::{models::AppState, utilities::html_template::HtmlTemplate};
 use askama::Template;
 use axum::{extract::State, response::IntoResponse};
 use nebula_lib::models::{FunctionResult, ModuleType};
