@@ -16,7 +16,6 @@ pub struct MetricData {
 #[derive(Template)]
 #[template(path = "pages/metrics.rs.html")]
 pub struct MetricsTemplate {
-    pub name: String,
     pub metrics: String,
     pub metrics_grouped_by_input: String,
     pub input_options: Vec<u128>,
@@ -36,11 +35,11 @@ pub async fn metrics(State(state): State<Arc<AppState>>) -> impl IntoResponse {
         .collect();
 
     let template = MetricsTemplate {
-        name: "Hey there".to_string(),
         metrics: serde_json::to_string(&metricified).unwrap(),
         metrics_grouped_by_input: serde_json::to_string(&grouped_by).unwrap(),
         input_options: sorted_options,
     };
+
     HtmlTemplate(template)
 }
 
