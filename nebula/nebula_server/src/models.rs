@@ -3,6 +3,8 @@ use nebula_lib::models::{FunctionResult, ModuleType};
 use serde::Deserialize;
 use tokio::sync::Mutex;
 
+use crate::utilities::format::format_micro_to_milli;
+
 #[derive(Debug)]
 pub struct AppState {
     pub function_calls: Mutex<Vec<FunctionResult>>,
@@ -16,8 +18,16 @@ pub struct FCList {
     pub total_docker_invocations: usize,
     pub avg_wasm_startup: u128,
     pub avg_wasm_total_time: u128,
+    pub avg_wasm_runtime: u128,
     pub avg_docker_startup: u128,
+    pub avg_docker_runtime: u128,
     pub avg_docker_total_time: u128,
+}
+
+impl FCList {
+    fn format_time(&self, time: &u128) -> String {
+        format_micro_to_milli(*time)
+    }
 }
 
 #[derive(Deserialize, Clone)]

@@ -1,17 +1,21 @@
 <p>
-  <b>Wasm: </b> 
-  <span class="grid grid-cols-3">
-    <span># calls: {{total_wasm_invocations}}</span>
-    <span>avg startup: {{avg_wasm_startup}}</span>
-    <span>avg runtime: {{avg_wasm_total_time}}</span>
+  <span class="grid grid-cols-4 justify-items-end">
+    <span class="justify-self-start">
+      <b>Wasm</b> ({{total_wasm_invocations}} calls):
+    </span>
+    <span>avg startup: {{self.format_time(avg_wasm_startup)}}</span>
+    <span>avg runtime: {{self.format_time(avg_wasm_runtime)}}</span>
+    <span>avg total: {{self.format_time(avg_wasm_total_time)}}</span>
   </span>
 </p>
 <p>
-  <b>Docker:</b> 
-  <span class="grid grid-cols-3">
-    <span># calls: {{total_docker_invocations}} </span> 
-    <span>avg startup: {{avg_docker_startup}}</span>
-    <span>avg runtime: {{avg_docker_total_time}}</span>
+  <span class="grid grid-cols-4 justify-items-end">
+    <span class="justify-self-start">
+      <b>Docker</b> ({{total_docker_invocations}} calls):
+    </span>
+    <span>avg startup: {{self.format_time(avg_docker_total_time)}}</span>
+    <span>avg runtime: {{self.format_time(avg_docker_runtime)}}</span>
+    <span>avg total: {{self.format_time(avg_docker_total_time)}}</span>
   </span>
 </p>
 
@@ -25,9 +29,9 @@
           <span>Function: {{ result.func_name }}</span>
         </p> 
         <p class="grid">
-          <span class="flex justify-between gap-2">Startup: <span>{{metrics.startup_time}}ms</span></span>
-          <span class="flex justify-between gap-2">Runtime: <span>{{metrics.total_runtime - metrics.startup_time}}ms</span></span>
-          <span class="flex justify-between gap-2">Total: <span>{{metrics.total_runtime}}ms</span></span>
+          <span class="flex justify-between gap-2">Startup: <span>{{self.format_time(metrics.startup_time)}}</span></span>
+          <span class="flex justify-between gap-2">Runtime: <span>{{self.format_time(metrics.total_runtime - metrics.startup_time)}}</span></span>
+          <span class="flex justify-between gap-2">Total: <span>{{self.format_time(metrics.total_runtime)}}</span></span>
         </p>
     </div>
       <div class="w-full flex">

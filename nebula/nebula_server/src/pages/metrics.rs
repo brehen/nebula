@@ -138,9 +138,9 @@ fn metricify_function_results(
         aggregation
     {
         let avg_result = Aggregated {
-            avg_startup_time: sum_startup as f64 / count as f64,
-            avg_runtime: sum_runtime as f64 / count as f64,
-            avg_total_runtime: sum_total_runtime as f64 / count as f64,
+            avg_startup_time: (sum_startup as f64 / count as f64) / 1_000.0,
+            avg_runtime: (sum_runtime as f64 / count as f64) / 1_000.0,
+            avg_total_runtime: (sum_total_runtime as f64 / count as f64) / 1_000.0,
         };
         nested_result
             .entry(func_name)

@@ -63,6 +63,8 @@ pub fn get_fc_list(function_results: Vec<FunctionResult>) -> FCList {
             total_docker_invocations: 0,
             avg_wasm_startup: 0,
             avg_docker_startup: 0,
+            avg_wasm_runtime: 0,
+            avg_docker_runtime: 0,
             avg_wasm_total_time: 0,
             avg_docker_total_time: 0,
         }
@@ -80,6 +82,13 @@ pub fn get_fc_list(function_results: Vec<FunctionResult>) -> FCList {
             .sum();
         let wasm_runtime_sum: u128 = wasm_results
             .iter()
+            .map(|result| {
+                let metrics = result.metrics.as_ref().unwrap();
+                metrics.total_runtime - metrics.startup_time
+            })
+            .sum();
+        let wasm_total_time_sum: u128 = wasm_results
+            .iter()
             .map(|result| result.metrics.as_ref().unwrap().total_runtime)
             .sum();
 
@@ -96,6 +105,13 @@ pub fn get_fc_list(function_results: Vec<FunctionResult>) -> FCList {
             .sum();
         let docker_runtime_sum: u128 = docker_results
             .iter()
+            .map(|result| {
+                let metrics = result.metrics.as_ref().unwrap();
+                metrics.total_runtime - metrics.startup_time
+            })
+            .sum();
+        let docker_total_time_sum: u128 = docker_results
+            .iter()
             .map(|result| result.metrics.as_ref().unwrap().total_runtime)
             .sum();
 
@@ -103,10 +119,13 @@ pub fn get_fc_list(function_results: Vec<FunctionResult>) -> FCList {
             function_results,
             total_wasm_invocations,
             total_docker_invocations,
-            avg_wasm_startup: wasm_startup_times / total_wasm_invocations as u128,
-            avg_docker_startup: docker_startup_times / total_docker_invocations as u128,
-            avg_wasm_total_time: wasm_runtime_sum / total_wasm_invocations as u128,
-            avg_docker_total_time: docker_runtime_sum / total_docker_invocations as u128,
+            avg_wasm_startup: wasm_startup_times / (total_wasm_invocations as u128).max(1),
+            avg_wasm_runtime: wasm_runtime_sum / (total_wasm_invocations as u128).max(1),
+            avg_wasm_total_time: wasm_total_time_sum / (total_wasm_invocations as u128).max(1),
+            avg_docker_startup: docker_startup_times / (total_docker_invocations as u128).max(1),
+            avg_docker_runtime: docker_runtime_sum / (total_docker_invocations as u128).max(1),
+            avg_docker_total_time: docker_total_time_sum
+                / (total_docker_invocations as u128).max(1),
         }
     };
 
