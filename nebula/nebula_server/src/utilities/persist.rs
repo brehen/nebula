@@ -7,6 +7,8 @@ use std::{
 
 use nebula_lib::models::FunctionResult;
 
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+
 fn get_data_path() -> PathBuf {
     let home_dir = dirs::home_dir().expect("Home directory not found");
     let app_dir = home_dir.join(".nebula");
@@ -15,7 +17,13 @@ fn get_data_path() -> PathBuf {
         fs::create_dir_all(&app_dir).expect("Failed to create app directory");
     }
 
-    app_dir.join("data.json")
+    let vers_dir = app_dir.join(VERSION);
+
+    if !vers_dir.exists() {
+        fs::create_dir_all(&vers_dir).expect("Failed to create version directory");
+    }
+
+    vers_dir.join("data.json")
 }
 
 pub fn save_results(results: Vec<FunctionResult>) -> io::Result<()> {
