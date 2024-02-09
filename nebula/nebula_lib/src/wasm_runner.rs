@@ -64,8 +64,9 @@ pub fn run_wasi_module(
     let total_runtime = start.elapsed().as_micros();
 
     println!(
-        "Done! Elapsed time: {}μs, used {}μs to start up.",
-        total_runtime, startup_time
+        "Done! Elapsed time: {:.2}ms, used {:.2}ms to start up.",
+        total_runtime as f64 / 1000.0,
+        startup_time as f64 / 1000.0
     );
 
     Ok(FunctionResult {
