@@ -13,7 +13,7 @@ mod docker {
     pub fn get_epoch_timestamp() -> Option<String> {
         let now = SystemTime::now();
         let dur_since_epoch = now.duration_since(UNIX_EPOCH).expect("Time went backwards");
-        let msecs_since_epoch = dur_since_epoch.as_millis();
+        let msecs_since_epoch = dur_since_epoch.as_micros();
         Some(format!("{}", msecs_since_epoch))
     }
 }

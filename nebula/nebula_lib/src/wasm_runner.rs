@@ -38,7 +38,7 @@ pub fn run_wasi_module(
     // Instantiate our module with the imports we've created, and run it.
     let module = Module::from_file(&engine, path)?;
 
-    let startup_time = start.clone().elapsed().as_millis();
+    let startup_time = start.clone().elapsed().as_micros();
 
     linker
         .module(&mut store, "", &module)
@@ -61,10 +61,10 @@ pub fn run_wasi_module(
 
     let result = String::from_utf8(contents)?.trim().to_string();
 
-    let total_runtime = start.elapsed().as_millis();
+    let total_runtime = start.elapsed().as_micros();
 
     println!(
-        "Done! Elapsed time: {}ms, used {}ms to start up.",
+        "Done! Elapsed time: {}μs, used {}μs to start up.",
         total_runtime, startup_time
     );
 

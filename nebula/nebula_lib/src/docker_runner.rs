@@ -31,7 +31,7 @@ pub fn run_docker_image(
 
     let (result, actual_startup) = parse_output(&stdout, cmd_start)?;
 
-    let total_runtime = start.elapsed().as_millis();
+    let total_runtime = start.elapsed().as_micros();
 
     Ok(FunctionResult {
         result,
@@ -49,7 +49,7 @@ pub fn run_docker_image(
 fn current_ms() -> std::io::Result<u128> {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .map(|duration| duration.as_millis())
+        .map(|duration| duration.as_micros())
         .map_err(|err| Error::new(std::io::ErrorKind::Other, err))
 }
 
@@ -73,5 +73,7 @@ fn parse_output(output: &str, cmd_startup: u128) -> Result<(String, u128)> {
             )
         })?;
 
-    Ok((result.to_string(), actual_startup - cmd_startup))
+    println!("actual_startup: {:?}, {:?}", actual_startup, cmd_startup);
+
+    Ok((result.to_string(), (actual_startup * 1000) - cmd_startup))
 }
