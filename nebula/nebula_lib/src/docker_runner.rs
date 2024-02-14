@@ -33,6 +33,11 @@ pub fn run_docker_image(
 
     let total_runtime = start.elapsed().as_micros();
 
+    println!(
+        "result: {:?}, cmd_start: {:?}, actual_startup: {:?}",
+        result, cmd_start, actual_startup
+    );
+
     Ok(FunctionResult {
         result,
         metrics: Some(Metrics {
@@ -73,7 +78,5 @@ fn parse_output(output: &str, cmd_startup: u128) -> Result<(String, u128)> {
             )
         })?;
 
-    println!("actual_startup: {:?}, {:?}", actual_startup, cmd_startup);
-
-    Ok((result.to_string(), (actual_startup * 1000) - cmd_startup))
+    Ok((result.to_string(), (actual_startup) - cmd_startup))
 }
