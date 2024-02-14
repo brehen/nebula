@@ -5,93 +5,32 @@
 
 {% block head %}
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="/assets/metrics.js"></script>
   <script>
-    
-    function setCharts(metrics) {
-        let labels = Object.keys(metrics).sort();
-        const dockerStartupData = labels.map(label => metrics[label].docker.avg_startup_time);
-        const dockerRuntimeData = labels.map(label => metrics[label].docker.avg_runtime);
-        const dockerTotalRuntimeData = labels.map(label => metrics[label].docker.avg_total_runtime);
-        const wasmStartupData = labels.map(label => metrics[label].wasm.avg_startup_time);
-        const wasmRuntimeData = labels.map(label => metrics[label].wasm.avg_runtime);
-        const wasmTotalRuntimeData = labels.map(label => metrics[label].wasm.avg_total_runtime);
+  document.addEventListener("DOMContentLoaded", function() {
+    const metrics = JSON.parse("{{metrics}}".replace(/&quot;/g, '"'))
+    const metricsG = JSON.parse("{{metrics_grouped_by_input}}".replace(/&quot;/g, '"'))
+    const metricsF = JSON.parse("{{metrics_grouped_by_module}}".replace(/&quot;/g, '"'))
 
-        labels = labels.map(label => label.split('').slice(0,4).join(''));
+    console.log(metricsF)
+  
 
+    setCharts(metrics)
 
-        const avgStartupCtx = document.getElementById('avgStartupChart');
-        const avgRuntimeCtx = document.getElementById('avgRuntimeChart');
-        const avgTotalTimeCtx = document.getElementById('avgTotalTimeChart');
+    const inputSelectElement = document.getElementById('input-value-select')
 
-        new Chart(avgStartupCtx, {
-            type: 'line',
-            data: {
-                labels,
-                datasets: [{
-                    label: 'Wasm',
-                    data: wasmStartupData,
-                    borderWidth: 1
-                }, {
-                    label: "Docker",
-                    data: dockerStartupData,
-                    borderWidth: 1
-                }]
-            },
-        });
+    inputSelectElement.addEventListener('change', function() {
+      const selectedValue = this.value;
 
-        new Chart(avgRuntimeCtx, {
-            type: 'line',
-            data: {
-                labels,
-                datasets: [{
-                    label: "Wasm",
-                    data: wasmRuntimeData,
-                    borderWidth: 1
-                }, {
-                    label: "Docker",
-                    data: dockerRuntimeData,
-                    borderWidth: 1
-                }, ]
-            },
-        });
+      let newMetrics = selectedValue === "" ? metrics : metricsG[selectedValue]
 
-        new Chart(avgTotalTimeCtx, {
-            type: 'line',
-            data: {
-                labels,
-                datasets: [{
-                    label: "Wasm",
-                    data: wasmTotalRuntimeData,
-                    borderWidth: 1
-                }, {
-                    label: "Docker",
-                    data: dockerTotalRuntimeData,
-                    borderWidth: 1
-                }, ]
-            },
-        });
-    }
-
-    document.addEventListener("DOMContentLoaded", function() {
-        const metrics = JSON.parse("{{metrics}}".replace(/&quot;/g, '"'))
-        const metricsG = JSON.parse("{{metrics_grouped_by_input}}".replace(/&quot;/g, '"'))
-
-        setCharts(metrics)
-
-        const selectElement = document.getElementById('input-value-select')
-
-        selectElement.addEventListener('change', function() {
-          const selectedValue = this.value;
-
-          let newMetrics = selectedValue === "" ? metrics : metricsG[selectedValue]
-
-          const charts = document.getElementsByTagName("canvas")
-          Array.from(charts).forEach((chart) => {
-            Chart.getChart(chart.id).destroy()
-          })
-          setCharts(newMetrics)
-        })
+      const charts = document.getElementsByTagName("canvas")
+      Array.from(charts).forEach((chart) => {
+        Chart.getChart(chart.id).destroy()
+      })
+      setCharts(newMetrics)
     })
+  })
   </script>
 {% endblock %}
 
