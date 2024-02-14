@@ -25,6 +25,7 @@ pub struct MetricsTemplate {
     pub metrics_grouped_by_input: String,
     pub metrics_grouped_by_module: String,
     pub input_options: Vec<u128>,
+    pub module_options: Vec<String>,
 }
 
 pub async fn metrics(State(state): State<Arc<AppState>>) -> impl IntoResponse {
@@ -35,6 +36,7 @@ pub async fn metrics(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     let grouped_by_input = group_by_input_value(function_results.clone());
     let grouped_by_module = grouped_by_module(function_results);
     let input_options: Vec<String> = grouped_by_input.keys().cloned().collect();
+    let module_options: Vec<String> = grouped_by_module.keys().cloned().collect();
     let sorted_options: Vec<u128> = input_options
         .iter()
         .map(|x| x.parse::<u128>().unwrap())
@@ -46,6 +48,7 @@ pub async fn metrics(State(state): State<Arc<AppState>>) -> impl IntoResponse {
         metrics_grouped_by_input: serde_json::to_string(&grouped_by_input).unwrap(),
         metrics_grouped_by_module: serde_json::to_string(&grouped_by_module).unwrap(),
         input_options: sorted_options,
+        module_options,
     };
 
     HtmlTemplate(template)

@@ -19,11 +19,11 @@ function setCharts(metrics) {
     (label) => metrics[label].wasm.avg_total_runtime,
   );
 
-  labels = labels.map((label) => label.split("").slice(0, 4).join(""));
+  //labels = labels.map((label) => label.split("").slice(0, 4).join(""));
 
-  const avgStartupCtx = document.getElementById("avgStartupChart");
-  const avgRuntimeCtx = document.getElementById("avgRuntimeChart");
-  const avgTotalTimeCtx = document.getElementById("avgTotalTimeChart");
+  const avgStartupCtx = document.getElementById("chart-1");
+  const avgRuntimeCtx = document.getElementById("chart-2");
+  const avgTotalTimeCtx = document.getElementById("chart-3");
 
   new Chart(avgStartupCtx, {
     type: "bar",
@@ -83,10 +83,10 @@ function setCharts(metrics) {
     options: {
       scales: {
         x: {
-          stacked: true,
+          // stacked: true,
         },
         y: {
-          stacked: true,
+          // stacked: true,
         },
       },
     },
@@ -106,4 +106,100 @@ function setCharts(metrics) {
       ],
     },
   });
+}
+
+function map_metricsF(metric, module) {
+  const { wasm, docker } = metric[module];
+  console.log(wasm);
+  const waasm = Object.entries(wasm).reduce(
+    (acc, [label, stats]) => {
+      acc.labels.push(label);
+      acc.startup.push(stats.startup[2]);
+      acc.runtime.push(stats.runtime[2]);
+      acc.total_time.push(stats.total_time[2]);
+      return acc;
+    },
+    {
+      labels: [],
+      startup: [],
+      runtime: [],
+      total_time: [],
+    },
+  );
+  const doocker = Object.entries(docker).reduce(
+    (acc, [label, stats]) => {
+      acc.labels.push(label);
+      acc.startup.push(stats.startup[2]);
+      acc.runtime.push(stats.runtime[2]);
+      acc.total_time.push(stats.total_time[2]);
+      return acc;
+    },
+    {
+      labels: [],
+      startup: [],
+      runtime: [],
+      total_time: [],
+    },
+  );
+
+  const chart1 = document.getElementById("chart-1");
+  const chart2 = document.getElementById("chart-2");
+  const chart3 = document.getElementById("chart-3");
+
+  new Chart(chart1, {
+    type: "line",
+    data: {
+      labels: waasm.labels,
+      datasets: [
+        {
+          label: "Wasm",
+          data: waasm.startup,
+          borderWidth: 1,
+        },
+        // {
+        //   label: "Docker",
+        //   data: doocker.startup,
+        //   borderWidth: 1,
+        // },
+      ],
+    },
+  });
+  new Chart(chart2, {
+    type: "line",
+    data: {
+      labels: waasm.labels,
+      datasets: [
+        {
+          label: "Wasm",
+          data: waasm.runtime,
+          borderWidth: 1,
+        },
+        // {
+        //   label: "Docker",
+        //   data: doocker.startup,
+        //   borderWidth: 1,
+        // },
+      ],
+    },
+  });
+  new Chart(chart3, {
+    type: "line",
+    data: {
+      labels: waasm.labels,
+      datasets: [
+        {
+          label: "Wasm",
+          data: waasm.total_time,
+          borderWidth: 1,
+        },
+        // {
+        //   label: "Docker",
+        //   data: doocker.startup,
+        //   borderWidth: 1,
+        // },
+      ],
+    },
+  });
+
+  console.log(waasm, doocker);
 }

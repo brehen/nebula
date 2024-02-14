@@ -12,9 +12,6 @@
     const metricsG = JSON.parse("{{metrics_grouped_by_input}}".replace(/&quot;/g, '"'))
     const metricsF = JSON.parse("{{metrics_grouped_by_module}}".replace(/&quot;/g, '"'))
 
-    console.log(metricsF)
-  
-
     setCharts(metrics)
 
     const inputSelectElement = document.getElementById('input-value-select')
@@ -30,6 +27,22 @@
       })
       setCharts(newMetrics)
     })
+
+    const moduleSelectElement = document.getElementById('module-value-select')
+
+    moduleSelectElement.addEventListener('change', function() {
+      const selectedValue = this.value;
+
+      if(selectedValue === "") {
+        setCharts(metrics)
+      } else {
+        const charts = document.getElementsByTagName("canvas")
+        Array.from(charts).forEach((chart) => {
+          Chart.getChart(chart.id).destroy()
+        })
+        map_metricsF(metricsF, selectedValue)
+      }
+    })
   })
   </script>
 {% endblock %}
@@ -38,6 +51,15 @@
   <section class='w-full py-8 md:p-12'>
 
     <div class="flex items-center justify-end gap-4 pr-4">
+      <label class="text-white" for="module_value">
+        Group by module:
+      </label>
+      <select name="module_value" id="module-value-select" class="rounded-lg">
+        <option value="">--Please select--</option>
+        {% for option in module_options %}
+          <option value="{{option}}">{{option}}</option>
+        {% endfor %}
+      </select>
       <label class="text-white ">
         Group by input:
       </label>
@@ -54,19 +76,19 @@
       <div class="flex flex-col gap-2">
         <h2 class="text-2xl">Average startup time</h2>
         <div class="bg-white rounded-xl p-4">
-          <canvas id="avgStartupChart" width="auto" height="200"></canvas>
+          <canvas id="chart-1" width="auto" height="200"></canvas>
         </div>
       </div>
       <div class="flex flex-col gap-2">
         <h2 class="text-2xl">Average runtime</h2>
         <div class="bg-white rounded-xl p-4">
-          <canvas id="avgRuntimeChart" width="auto" height="200"></canvas>
+          <canvas id="chart-2" width="auto" height="200"></canvas>
         </div>
       </div>
       <div class="flex flex-col gap-2">
         <h2 class="text-2xl">Average total time</h2>
         <div class="bg-white rounded-xl p-4">
-          <canvas id="avgTotalTimeChart" width="auto" height="200"></canvas>
+          <canvas id="chart-3" width="auto" height="200"></canvas>
         </div>
       </div>
     </div>
