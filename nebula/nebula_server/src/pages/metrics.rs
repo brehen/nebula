@@ -1,5 +1,10 @@
 use itertools::Itertools;
-use std::{collections::HashMap, sync::Arc};
+use std::{
+    cmp::{max, min},
+    collections::HashMap,
+    sync::Arc,
+};
+use tracing::info;
 
 use crate::{models::AppState, utilities::html_template::HtmlTemplate};
 use askama::Template;
@@ -18,6 +23,7 @@ pub struct MetricData {
 pub struct MetricsTemplate {
     pub metrics: String,
     pub metrics_grouped_by_input: String,
+    pub metrics_grouped_by_module: String,
     pub input_options: Vec<u128>,
 }
 
@@ -26,8 +32,9 @@ pub async fn metrics(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     let function_results: Vec<FunctionResult> = lock.clone().into_iter().rev().collect();
     let metricified = metricify_function_results(function_results.clone());
 
-    let grouped_by = group_by_input_value(function_results);
-    let input_options: Vec<String> = grouped_by.keys().cloned().collect();
+    let grouped_by_input = group_by_input_value(function_results.clone());
+    let grouped_by_module = grouped_by_module(function_results);
+    let input_options: Vec<String> = grouped_by_input.keys().cloned().collect();
     let sorted_options: Vec<u128> = input_options
         .iter()
         .map(|x| x.parse::<u128>().unwrap())
@@ -36,7 +43,8 @@ pub async fn metrics(State(state): State<Arc<AppState>>) -> impl IntoResponse {
 
     let template = MetricsTemplate {
         metrics: serde_json::to_string(&metricified).unwrap(),
-        metrics_grouped_by_input: serde_json::to_string(&grouped_by).unwrap(),
+        metrics_grouped_by_input: serde_json::to_string(&grouped_by_input).unwrap(),
+        metrics_grouped_by_module: serde_json::to_string(&grouped_by_module).unwrap(),
         input_options: sorted_options,
     };
 
@@ -87,7 +95,6 @@ fn group_by_input_value(
         (sum_startup, sum_runtime, sum_total_runtime, count),
     ) in aggregation
     {
-        println!("{:?}, {:?}", func_name, count);
         let avg_result = Aggregated {
             avg_startup_time: sum_startup as f64 / count as f64,
             avg_runtime: sum_runtime as f64 / count as f64,
@@ -110,6 +117,109 @@ fn group_by_input_value(
     result
 }
 
+// sum, min, max, count
+type TimeStats = (u128, u128, u128, u32);
+#[derive(Serialize, Debug, Clone, Default)]
+struct AggregatedModuleStats {
+    startup: [f64; 3],
+    runtime: [f64; 3],
+    total_time: [f64; 3],
+}
+
+#[derive(Serialize, Debug, Clone, Default)]
+struct NestedAggregatedModuleStats {
+    wasm: AggregatedModuleStats,
+    docker: AggregatedModuleStats,
+}
+
+fn grouped_by_module(
+    func_results: Vec<FunctionResult>,
+) -> HashMap<String, HashMap<String, HashMap<String, AggregatedModuleStats>>> {
+    // startup, runtime, total, min, max, avg
+    let mut aggregation: HashMap<(String, String, String), (TimeStats, TimeStats, TimeStats)> =
+        HashMap::new();
+
+    for result in func_results.into_iter() {
+        let module_type = match result.func_type {
+            ModuleType::Docker => "docker",
+            ModuleType::Wasm => "wasm",
+        }
+        .to_string();
+
+        let key = (result.func_name, module_type, result.input);
+        let entry = aggregation.entry(key).or_insert_with(|| {
+            (
+                (0, 1_000_000, 0, 0),
+                (0, 1_000_000, 0, 0),
+                (0, 1_000_000, 0, 0),
+            )
+        });
+        // println!("{:?}: {:?}", key, entry);
+        if let Some(metrics) = result.metrics {
+            entry.0 = (
+                metrics.startup_time + entry.0 .0,
+                min(entry.0 .1, metrics.startup_time),
+                max(entry.0 .2, metrics.startup_time),
+                entry.0 .3 + 1,
+            );
+            let runtime = metrics.total_runtime - metrics.startup_time;
+            entry.1 = (
+                runtime + entry.1 .0,
+                min(entry.1 .1, runtime),
+                max(entry.1 .2, runtime),
+                entry.1 .3 + 1,
+            );
+            entry.2 = (
+                metrics.total_runtime + entry.2 .0,
+                min(entry.2 .1, metrics.total_runtime),
+                max(entry.2 .2, metrics.total_runtime),
+                entry.2 .3 + 1,
+            );
+        }
+    }
+
+    let mut result: HashMap<String, HashMap<String, HashMap<String, AggregatedModuleStats>>> =
+        HashMap::new();
+
+    for ((func_name, module_type, input_value), (startup, runtime, total_time)) in aggregation {
+        // println!("{:?}", startup);
+        let startup_stats: [f64; 3] = [
+            startup.1 as f64,
+            startup.2 as f64,
+            (startup.0 as f64 / startup.3 as f64).round(),
+        ];
+
+        let runtime_stats: [f64; 3] = [
+            runtime.1 as f64,
+            runtime.2 as f64,
+            (runtime.0 as f64 / runtime.3 as f64).round(),
+        ];
+
+        let total_time_stats: [f64; 3] = [
+            total_time.1 as f64,
+            total_time.2 as f64,
+            (total_time.0 as f64 / total_time.3 as f64).round(),
+        ];
+
+        let stats = AggregatedModuleStats {
+            startup: startup_stats,
+            runtime: runtime_stats,
+            total_time: total_time_stats,
+        };
+
+        result
+            .entry(func_name)
+            .or_default()
+            .entry(module_type)
+            .or_default()
+            .entry(input_value)
+            .or_insert_with(|| stats);
+    }
+
+    println!("{:?}", result);
+
+    result
+}
 fn metricify_function_results(
     func_results: Vec<FunctionResult>,
 ) -> HashMap<String, NestedAggregated> {
