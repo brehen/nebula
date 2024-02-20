@@ -1,3 +1,5 @@
+ARG IMAGE=debian:bullseye-slim
+
 FROM rust:1.70 as build
 WORKDIR /usr/src/nebula
 
@@ -8,9 +10,14 @@ COPY $PROGRAM_NAME .
 
 RUN cargo build --release --features docker 
 
-# Runtime Stage
-FROM debian:bullseye-slim
-RUN apt-get update && apt-get install libc6 && rm -rf /var/lib/apt/lists/*
+FROM $IMAGE
+
+RUN if ["$IMAGE" != "archlinux:latest"]; then \
+      apt-get update && \
+      apt-get install -y libc6 && \
+      rm -rf /var/lib/apt/lists/* ;\
+    fi
+
 COPY --from=build /usr/src/nebula/target/release/$PROGRAM_NAME /usr/local/bin/
 COPY --from=build /usr/src/nebula/run.sh /usr/local/bin/
 
