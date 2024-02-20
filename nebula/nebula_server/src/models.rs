@@ -37,8 +37,19 @@ pub struct FunctionRequest {
     pub module_type: ModuleType,
     #[serde(default = "default_num_calls")]
     pub num_calls: u8,
+    #[serde(default = "default_image")]
+    pub base_image: String,
 }
 
 fn default_num_calls() -> u8 {
     1
+}
+
+fn default_image() -> String {
+    "debian".to_string()
+}
+
+pub fn verify_image(image: &str) -> bool {
+    let valid_images = ["debian", "ubuntu", "archlinux"];
+    valid_images.contains(&image)
 }

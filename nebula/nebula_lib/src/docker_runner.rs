@@ -10,6 +10,7 @@ pub fn run_docker_image(
     image_name: &str,
     input: &str,
     func_name: String,
+    base_image: String,
 ) -> Result<FunctionResult> {
     let start = Instant::now();
 
@@ -48,6 +49,7 @@ pub fn run_docker_image(
         func_type: ModuleType::Docker,
         func_name,
         input: input.to_string(),
+        base_image,
     })
 }
 

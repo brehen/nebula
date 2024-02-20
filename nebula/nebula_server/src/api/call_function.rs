@@ -28,8 +28,15 @@ pub async fn call_function(
         let req = request.clone();
         let result: FunctionResult = match request.module_type {
             ModuleType::Docker => {
-                let docker_module = format!("nebula-function-{}", req.function_name);
-                run_docker_image(&docker_module, &req.input, req.function_name).expect("It to work")
+                let docker_module =
+                    format!("nebula-function-{}-{}", req.function_name, req.base_image);
+                run_docker_image(
+                    &docker_module,
+                    &req.input,
+                    req.function_name,
+                    req.base_image,
+                )
+                .expect("It to work")
             }
             ModuleType::Wasm => {
                 let function_path = get_file_path(&req.function_name);

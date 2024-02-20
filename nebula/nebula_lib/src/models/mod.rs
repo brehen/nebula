@@ -18,6 +18,7 @@ pub struct FunctionResult {
     pub func_type: ModuleType,
     pub func_name: String,
     pub input: String,
+    pub base_image: String,
 }
 
 impl Display for FunctionResult {

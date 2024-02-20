@@ -79,6 +79,7 @@ pub fn run_wasi_module(
         func_type: ModuleType::Wasm,
         func_name,
         input: input.to_string(),
+        base_image: "N/A".to_string(),
     })
 }
 

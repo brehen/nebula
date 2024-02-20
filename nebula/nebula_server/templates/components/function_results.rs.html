@@ -25,7 +25,7 @@
       <div class="text-sm flex justify-between pb-2">
         <p class="grid">
           <span>Input: {{result.input}} => Result: {{ result.result }}</span>
-          <span>Type: {% if matches!(result.func_type, ModuleType::Docker) +%} Docker {% else %} Wasm {%+ endif %}</span>
+          <span>Type: {% if matches!(result.func_type, ModuleType::Docker) +%} Docker ({{result.base_image}}) {% else %} Wasm {%+ endif %}</span>
           <span>Function: {{ result.func_name }}</span>
         </p> 
         <p class="grid">

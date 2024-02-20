@@ -35,8 +35,12 @@
                 type="text"
                 class="rounded-l-md flex-1"
               />
-
               <input type="text" name="function_name" class="hidden" value="{{module}}" />
+              <select name="base_image">
+                <option selected value="debian">Debian</option>
+                <option value="ubuntu">Ubuntu</option>
+                <option value="archlinux">Archlinux</option>
+              </select>
               <input type="text" name="module_type" class="hidden" value="Docker" />
               <button
                   type="submit"
