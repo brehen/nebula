@@ -17,7 +17,10 @@ use nebula_server::{
     components::function_results::get_function_results,
     models::AppState,
     pages::{about, docker_page, index, metrics, wasm_page},
-    utilities::persist::load_results,
+    utilities::{
+        persist::load_results,
+        serialize_modules::{self, serialize_modules},
+    },
 };
 use tower_http::services::ServeDir;
 use tracing::info;
@@ -58,6 +61,8 @@ async fn main() -> anyhow::Result<()> {
         Ok(func_calls) => func_calls,
         Err(_) => vec![],
     };
+
+    serialize_modules();
 
     let app_state = Arc::new(AppState {
         function_calls: Mutex::new(stored_function_calls),
