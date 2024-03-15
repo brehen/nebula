@@ -8,5 +8,5 @@ pub fn get_file_path(function_name: &str) -> PathBuf {
 
     let file_name = format!("{}.wasm", function_name);
 
-    cwd.join("modules/wasm/").join(file_name)
+    cwd.join(".nebula/serialized/").join(file_name)
 }
