@@ -40,7 +40,7 @@ pub async fn call_function(
             }
             ModuleType::Wasm => {
                 let function_path = get_file_path(&req.function_name);
-                run_wasi_module(&function_path, &req.input, req.function_name).expect("to work")
+                run_wasi_module(&req.input, function_path, &req.function_name).expect("to work")
             }
         };
 

@@ -1,6 +1,11 @@
 //! Example of instantiating a wasm module which uses WASI imports.
 
-use std::{path::PathBuf, time::Instant};
+use std::{
+    fs::File,
+    io::{Read, Write},
+    path::PathBuf,
+    time::Instant,
+};
 
 use anyhow::Result;
 use wasi_common::pipe::{ReadPipe, WritePipe};
@@ -8,12 +13,24 @@ use wasi_common::pipe::{ReadPipe, WritePipe};
 use wasmtime::*;
 use wasmtime_wasi::sync::WasiCtxBuilder;
 
-use crate::models::{FunctionResult, Metrics, ModuleType};
+use crate::{
+    list_files::list_files,
+    models::{FunctionResult, Metrics, ModuleType},
+};
+
+fn load_module(engine: &Engine, wasi_module_path: PathBuf) -> Result<Module, anyhow::Error> {
+    let mut module_file = File::open(wasi_module_path)?;
+    let mut module_bytes = Vec::<u8>::new();
+    module_file.read_to_end(&mut module_bytes)?;
+    let module = unsafe { Module::deserialize(engine, &module_bytes)? };
+
+    Ok(module)
+}
 
 pub fn run_wasi_module(
-    path: &PathBuf,
     input: &str,
-    func_name: String,
+    wasi_module_path: PathBuf,
+    func_name: &str,
 ) -> Result<FunctionResult, anyhow::Error> {
     let start = Instant::now();
     // Define the WASI functions globally on the `Config`.
@@ -36,7 +53,8 @@ pub fn run_wasi_module(
     let mut store = Store::new(&engine, wasi);
 
     // Instantiate our module with the imports we've created, and run it.
-    let module = Module::from_file(&engine, path)?;
+
+    let module = load_module(&engine, wasi_module_path)?;
 
     let startup_time = start.clone().elapsed().as_micros();
 
@@ -77,10 +95,31 @@ pub fn run_wasi_module(
             startup_percentage: ((startup_time as f64 / total_runtime as f64) * 100.0).round(),
         }),
         func_type: ModuleType::Wasm,
-        func_name,
+        func_name: func_name.to_string(),
         input: input.to_string(),
         base_image: "N/A".to_string(),
     })
+}
+
+pub fn serialize_wasm_modules(module_dir: PathBuf, serialized_dir: PathBuf) -> anyhow::Result<()> {
+    let modules = list_files(module_dir.to_str().unwrap())?;
+    let engine = Engine::default();
+
+    for module in modules {
+        let module_name = module.file_name().unwrap();
+        let module = Module::from_file(&engine, &module)?;
+        let module_bytes = module.serialize()?;
+
+        let target_module = serialized_dir.join(module_name);
+
+        let mut file = File::create(target_module)?;
+
+        file.write_all(&module_bytes)?;
+    }
+
+    println!("{:?}", serialized_dir);
+
+    Ok(())
 }
 
 #[cfg(test)]
@@ -93,7 +132,7 @@ mod tests {
     fn it_works() {
         let files = list_files("../faas_user/modules").unwrap();
         println!("{:?}", files);
-        match run_wasi_module(files.get(0).expect("to exist"), "2", "".to_owned()) {
+        match run_wasi_module("2", PathBuf::from(""), "") {
             Ok(_list) => assert_eq!(2, 3),
             Err(_err) => assert_eq!(1, 2),
         }
