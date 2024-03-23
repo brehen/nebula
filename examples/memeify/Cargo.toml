@@ -1,0 +1,18 @@
+[package]
+name = "memeify"
+version = "0.1.0"
+edition = "2021"
+build = "build.rs"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+ab_glyph = "0.2.23"
+image = "0.25.0"
+imageproc = "0.24.0"
+rusttype = "0.9.3"
+shared = { path = "../shared" }
+
+
+[features]
+docker = []

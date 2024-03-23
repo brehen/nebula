@@ -4,6 +4,7 @@ members = [
   "exponential",
   "factorial",
   "fibonacci",
+  "memeify",
   "fibonacci-recursive",
   "mc-estimate-birthday-paradox",
   "mc-estimate-euler",
