@@ -14,11 +14,19 @@ pub fn sanitize_input(func_name: &str, input: &str, limits: &HashMap<&str, u64>)
 }
 
 pub fn get_limits() -> HashMap<&'static str, u64> {
-    HashMap::from([
-        ("exponential", 500000),
-        ("factorial", 500000),
-        ("fibonacci", 500000),
-        ("fibonacci-recursive", 40),
-        ("prime-number", 500000),
-    ])
+    #[cfg(debug_assertions)]
+    {
+        HashMap::new()
+    }
+
+    #[cfg(not(debug_assertions))]
+    {
+        HashMap::from([
+            ("exponential", 500000),
+            ("factorial", 500000),
+            ("fibonacci", 500000),
+            ("fibonacci-recursive", 40),
+            ("prime-number", 500000),
+        ])
+    }
 }
