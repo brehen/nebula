@@ -17,10 +17,7 @@ use nebula_server::{
     components::function_results::get_function_results,
     models::AppState,
     pages::{about, docker_page, index, metrics, wasm_page},
-    utilities::{
-        persist::load_results,
-        serialize_modules::{self, serialize_modules},
-    },
+    utilities::{persist::load_results, serialize_modules::serialize_modules},
 };
 use tower_http::services::ServeDir;
 use tracing::info;
