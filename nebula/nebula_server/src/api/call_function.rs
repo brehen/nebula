@@ -10,7 +10,12 @@ use tracing::info;
 
 use crate::{
     models::{AppState, FCList, FunctionRequest},
-    utilities::{get_file_path::get_file_path, html_template::HtmlTemplate, persist::save_results},
+    utilities::{
+        get_file_path::get_file_path,
+        html_template::HtmlTemplate,
+        persist::save_results,
+        sanitize_input::{get_limits, sanitize_input},
+    },
 };
 
 pub async fn call_function(
@@ -22,25 +27,24 @@ pub async fn call_function(
         request.function_name, request.module_type, request.num_calls
     );
 
+    let limits = get_limits();
+
     let mut results = Vec::new();
 
     for _ in 0..request.num_calls {
         let req = request.clone();
+        let input = &req.input;
+        let input = &sanitize_input(&req.function_name, input, &limits);
         let result: FunctionResult = match request.module_type {
             ModuleType::Docker => {
                 let docker_module =
                     format!("nebula-function-{}-{}", req.function_name, req.base_image);
-                run_docker_image(
-                    &docker_module,
-                    &req.input,
-                    req.function_name,
-                    req.base_image,
-                )
-                .expect("It to work")
+                run_docker_image(&docker_module, input, req.function_name, req.base_image)
+                    .expect("It to work")
             }
             ModuleType::Wasm => {
                 let function_path = get_file_path(&req.function_name);
-                run_wasi_module(&req.input, function_path, &req.function_name).expect("to work")
+                run_wasi_module(input, function_path, &req.function_name).expect("to work")
             }
         };
 
