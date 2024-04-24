@@ -12,6 +12,7 @@ pub fn run_docker_image(
     func_name: String,
     base_image: String,
 ) -> Result<FunctionResult> {
+    let start_since_epoch = current_micros()?;
     let start = Instant::now();
 
     println!("{}", image_name);
@@ -22,7 +23,7 @@ pub fn run_docker_image(
         .stdout(Stdio::piped())
         .spawn()?;
 
-    let cmd_start = current_ms()?;
+    let cmd_start = current_micros()?;
 
     child.stdin.as_mut().unwrap().write_all(input.as_bytes())?;
 
@@ -43,7 +44,9 @@ pub fn run_docker_image(
         result,
         metrics: Some(Metrics {
             startup_time: actual_startup,
+            start_since_epoch,
             total_runtime,
+            end_since_epoch: start_since_epoch + total_runtime,
             startup_percentage: ((actual_startup as f64 / total_runtime as f64) * 100.0).round(),
         }),
         func_type: ModuleType::Docker,
@@ -53,7 +56,7 @@ pub fn run_docker_image(
     })
 }
 
-fn current_ms() -> std::io::Result<u128> {
+pub fn current_micros() -> std::io::Result<u128> {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .map(|duration| duration.as_micros())
@@ -66,6 +69,8 @@ fn parse_output(output: &str, cmd_startup: u128) -> Result<(String, u128)> {
         std::io::ErrorKind::Other,
         "No result part in output",
     ))?;
+    // Time inside the docker image what microsecond since epoch it started running, counting as
+    // the duration of the cold start.
     let actual_startup = parts
         .next()
         .ok_or(Error::new(

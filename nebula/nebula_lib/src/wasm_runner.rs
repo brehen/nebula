@@ -14,6 +14,7 @@ use wasmtime::*;
 use wasmtime_wasi::sync::WasiCtxBuilder;
 
 use crate::{
+    docker_runner::current_micros,
     list_files::list_files,
     models::{FunctionResult, Metrics, ModuleType},
 };
@@ -32,6 +33,7 @@ pub fn run_wasi_module(
     wasi_module_path: PathBuf,
     func_name: &str,
 ) -> Result<FunctionResult, anyhow::Error> {
+    let start_since_epoch = current_micros()?;
     let start = Instant::now();
     // Define the WASI functions globally on the `Config`.
     let engine = Engine::default();
@@ -90,8 +92,10 @@ pub fn run_wasi_module(
     Ok(FunctionResult {
         result,
         metrics: Some(Metrics {
-            total_runtime,
             startup_time,
+            start_since_epoch,
+            total_runtime,
+            end_since_epoch: start_since_epoch + total_runtime,
             startup_percentage: ((startup_time as f64 / total_runtime as f64) * 100.0).round(),
         }),
         func_type: ModuleType::Wasm,

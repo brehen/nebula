@@ -34,7 +34,9 @@ impl Display for FunctionResult {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Metrics {
     pub startup_time: u128,
+    pub start_since_epoch: u128,
     pub total_runtime: u128,
+    pub end_since_epoch: u128,
     pub startup_percentage: f64,
 }
 
