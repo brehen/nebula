@@ -1,11 +1,12 @@
 use std::sync::Arc;
 
-use axum::{extract::State, response::IntoResponse, Form};
+use axum::{extract::State, http::StatusCode, response::IntoResponse, Form};
 use nebula_lib::{
     docker_runner::run_docker_image,
     models::{FunctionResult, ModuleType},
     wasm_runner::run_wasi_module,
 };
+use serde::Serialize;
 use tracing::info;
 
 use crate::{
@@ -63,6 +64,50 @@ pub async fn call_function(
     let template = get_fc_list(function_results);
 
     HtmlTemplate(template)
+}
+
+#[derive(Serialize)]
+struct HeadlessResponse {
+    results: Vec<FunctionResult>,
+}
+
+pub async fn call_function_headless(
+    // State(_state): State<Arc<AppState>>,
+    Form(request): Form<FunctionRequest>,
+) -> impl IntoResponse {
+    info!(
+        "calling function: {:?}, type: {:?}, {} times",
+        request.function_name, request.module_type, request.num_calls
+    );
+
+    let limits = get_limits();
+
+    let mut results = Vec::new();
+
+    for _ in 0..request.num_calls {
+        let req = request.clone();
+        let input = &req.input;
+        let input = &sanitize_input(&req.function_name, input, &limits);
+        let result: FunctionResult = match request.module_type {
+            ModuleType::Docker => {
+                let docker_module =
+                    format!("nebula-function-{}-{}", req.function_name, req.base_image);
+                run_docker_image(&docker_module, input, req.function_name, req.base_image)
+                    .expect("It to work")
+            }
+            ModuleType::Wasm => {
+                let function_path = get_file_path(&req.function_name);
+                run_wasi_module(input, function_path, &req.function_name).expect("to work")
+            }
+        };
+
+        results.push(result);
+    }
+
+    let body = HeadlessResponse { results };
+    let body = serde_json::to_string(&body).expect("failed to serialize results");
+
+    (StatusCode::OK, body).into_response()
 }
 
 pub fn get_fc_list(function_results: Vec<FunctionResult>) -> FCList {

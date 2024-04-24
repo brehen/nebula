@@ -13,7 +13,7 @@ use axum::{
     Router,
 };
 use nebula_server::{
-    api::call_function::call_function,
+    api::call_function::{call_function, call_function_headless},
     components::function_results::get_function_results,
     models::AppState,
     pages::{about, docker_page, index, metrics, wasm_page},
@@ -51,6 +51,7 @@ async fn main() -> anyhow::Result<()> {
     let api_router = Router::new()
         .route("/results", get(get_function_results))
         .route("/wasm", post(call_function))
+        .route("/wasm_headless", post(call_function_headless))
         .route("/docker", post(call_function))
         .route("/wasm/all", post(call_function));
 
