@@ -33,3 +33,39 @@ pub async fn write_baseline(readings: &Vec<SensorData>) -> io::Result<()> {
     fs::write(baseline_path, serialized)?;
     Ok(())
 }
+
+pub async fn read_values<T>(file_name: &str) -> io::Result<T>
+where
+    T: serde::de::DeserializeOwned,
+{
+    let fr_path = get_data_path(file_name);
+
+    println!("Reading from: {:?}", fr_path);
+
+    let mut file = fs::OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create(true) // This will create the file if it doesn't exist
+        .open(fr_path)?;
+    let mut contents = String::new();
+    file.read_to_string(&mut contents)?;
+
+    if contents.is_empty() {
+        contents = "[]".to_string();
+    }
+
+    let values = serde_json::from_str(&contents)?;
+
+    Ok(values)
+}
+
+pub async fn write_results<T>(function_results: &T, file_name: &str) -> io::Result<()>
+where
+    T: serde::Serialize,
+{
+    let fr_path = get_data_path(file_name);
+
+    let serialized = serde_json::to_string(function_results)?;
+    fs::write(fr_path, serialized)?;
+    Ok(())
+}
