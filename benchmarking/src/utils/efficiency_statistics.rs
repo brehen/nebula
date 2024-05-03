@@ -1,37 +1,26 @@
 use std::collections::HashMap;
+use std::str::FromStr;
 
+use serde_derive::Serialize;
+
+use super::calc::median;
+use super::calc::std_deviation;
+use super::calc::update_min_max_avg;
 use super::request::FunctionResult;
+use super::request::ModuleType;
+use super::Metrics; // Import the ModuleType enum
 
-#[derive(Default, Debug, Clone, Copy)]
-pub struct Metrics {
-    pub min: f64,
-    pub max: f64,
-    pub median: f64,
-    pub average: f64,
-}
-
-impl Metrics {
-    pub fn new() -> Self {
-        Metrics {
-            min: f64::MAX,
-            max: f64::MIN,
-            median: 0.0,
-            average: 0.0,
-        }
-    }
-}
-
-#[derive(Default)]
-pub struct NormalizedMetrics {
+#[derive(Default, Debug, Serialize)]
+pub struct EfficiencyMetrics {
     pub startup_time: Metrics,
-    pub total_runtime: Metrics,
+    pub runtime: Metrics,
     pub num_invoked: u32,
 }
 
 pub fn analyze_efficiency_data(
     measurements: &[FunctionResult],
-) -> HashMap<(String, String, String), NormalizedMetrics> {
-    let mut normalized_metrics = HashMap::new();
+) -> HashMap<(String, String, String), EfficiencyMetrics> {
+    let mut efficiency_metrics = HashMap::new();
 
     for measurement in measurements {
         let func_type = match measurement.func_type {
@@ -43,9 +32,9 @@ pub fn analyze_efficiency_data(
             measurement.func_name.clone(),
             measurement.input.clone(),
         );
-        let metrics = normalized_metrics
+        let metrics = efficiency_metrics
             .entry(key)
-            .or_insert_with(NormalizedMetrics::default);
+            .or_insert_with(EfficiencyMetrics::default);
 
         metrics.num_invoked += 1;
 
@@ -55,91 +44,200 @@ pub fn analyze_efficiency_data(
                 measurement_metrics.startup_time as f64,
             );
             update_min_max_avg(
-                &mut metrics.total_runtime,
-                measurement_metrics.total_runtime as f64,
+                &mut metrics.runtime,
+                measurement_metrics.total_runtime as f64 - measurement_metrics.startup_time as f64,
             );
         }
     }
 
-    calculate_medians(&mut normalized_metrics, measurements);
+    calculate_medians(&mut efficiency_metrics, measurements);
 
-    normalized_metrics
-}
-
-fn update_min_max_avg(metrics: &mut Metrics, value: f64) {
-    if metrics.min == 0.0 {
-        metrics.min = value
-    } else {
-        metrics.min = metrics.min.min(value);
-    }
-    metrics.max = metrics.max.max(value);
-    metrics.average += value;
+    efficiency_metrics
 }
 
 fn calculate_medians(
-    normalized_metrics: &mut HashMap<(String, String, String), NormalizedMetrics>,
+    efficiency_metrics: &mut HashMap<(String, String, String), EfficiencyMetrics>,
     measurements: &[FunctionResult],
 ) {
-    for (_, metrics) in normalized_metrics.iter_mut() {
-        metrics.startup_time.median = calculate_median(measurements, |m| {
-            m.metrics
-                .as_ref()
-                .map(|mm| mm.startup_time as f64)
-                .unwrap_or_default()
-        });
-        metrics.total_runtime.median = calculate_median(measurements, |m| {
-            m.metrics
-                .as_ref()
-                .map(|mm| mm.total_runtime as f64)
-                .unwrap_or_default()
-        });
-        metrics.startup_time.average /= metrics.num_invoked as f64;
-        metrics.total_runtime.average /= metrics.num_invoked as f64;
+    for ((func_type, func_name, input), metrics) in efficiency_metrics.iter_mut() {
+        let startup_times: Vec<_> = measurements
+            .iter()
+            .filter(|m| {
+                m.func_type == ModuleType::from_str(func_type).unwrap()
+                    && &m.func_name == func_name
+                    && &m.input == input
+            })
+            .flat_map(|m| m.metrics.as_ref().map(|mm| mm.startup_time as f64))
+            .collect();
+
+        let runtimes: Vec<_> = measurements
+            .iter()
+            .filter(|m| {
+                m.func_type == ModuleType::from_str(func_type).unwrap()
+                    && &m.func_name == func_name
+                    && &m.input == input
+            })
+            .flat_map(|m| {
+                m.metrics
+                    .as_ref()
+                    .map(|mm| mm.total_runtime as f64 - mm.startup_time as f64)
+            })
+            .collect();
+
+        metrics.startup_time.median = median(&startup_times).unwrap_or(0.0);
+        metrics.runtime.median = median(&runtimes).unwrap_or(0.0);
+
+        metrics.startup_time.mean /= metrics.num_invoked as f64;
+        metrics.runtime.mean /= metrics.num_invoked as f64;
+
+        metrics.startup_time.std_deviation = std_deviation(&startup_times).unwrap_or(0.0); // Calculate standard deviation
+        metrics.runtime.std_deviation = std_deviation(&runtimes).unwrap_or(0.0);
     }
 }
 
-fn calculate_median<F>(measurements: &[FunctionResult], f: F) -> f64
-where
-    F: Fn(&FunctionResult) -> f64,
-{
-    let mut values: Vec<_> = measurements.iter().map(f).collect();
-    values.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
-    let mid = values.len() / 2;
-    if values.len() % 2 == 0 {
-        (values[mid - 1] + values[mid]) / 2.0
-    } else {
-        values[mid]
-    }
-}
+// pub fn draw_efficiency_metrics(
+//     metrics_map: &HashMap<(String, String, String), EfficiencyMetrics>,
+// ) -> anyhow::Result<()> {
+//     let fibonacci_docker_metrics: Vec<(u32, EfficiencyMetrics)> = Vec::new();
+//     let fibonacci_wasm_metrics: Vec<(u32, EfficiencyMetrics)> = Vec::new();
+//
+//     for ((func_type, func_name, input), metrics) in metrics_map {
+//         if func_name == "fibonacci-recursive" {
+//             if func_type == "Docker" {
+//                 fibonacci_docker_metrics.push((input.parse().unwrap(), metrics.clone()));
+//             } else {
+//                 fibonacci_wasm_metrics.push((input.parse().unwrap(), metrics.clone()));
+//             }
+//         }
+//     }
+//
+//     if !fibonacci_docker_metrics.is_empty() && !fibonacci_wasm_metrics.is_empty() {
+//         let root = BitMapBackend::new("fibonacci_metrics.png", (640, 480)).into_drawing_area();
+//         root.fill(&WHITE)?;
+//
+//         let mut chart = ChartBuilder::on(&root)
+//             .caption(
+//                 "Performance Metrics for fibonacci",
+//                 ("sans-serif", 50).into_font(),
+//             )
+//             .margin(5)
+//             .x_label_area_size(30)
+//             .y_label_area_size(30)
+//             .build_ranged(
+//                 fibonacci_docker_metrics
+//                     .iter()
+//                     .chain(fibonacci_wasm_metrics.iter())
+//                     .map(|(input, _)| *input as i32)
+//                     .min()
+//                     .unwrap()
+//                     ..=fibonacci_docker_metrics
+//                         .iter()
+//                         .chain(fibonacci_wasm_metrics.iter())
+//                         .map(|(input, _)| *input as i32)
+//                         .max()
+//                         .unwrap(),
+//                 0.0..1000000.0,
+//             )?;
+//
+//         chart
+//             .configure_mesh()
+//             .light_line_style(&WHITE)
+//             .x_desc("Input")
+//             .y_desc("Time (ns)")
+//             .draw()?;
+//
+//         for (input, metrics) in &fibonacci_docker_metrics {
+//             chart.draw_series(
+//                 LineSeries::new(
+//                     (0..metrics.num_invoked).map(|x| x + 1),
+//                     metrics.startup_time.min..=metrics.startup_time.max,
+//                 )
+//                 .point_size(2)
+//                 .point_fill(&BLUE)
+//                 .point_stroke(&BLACK)
+//                 .title(&format!("Docker Startup Time (Input: {})", input)),
+//             )?;
+//
+//             chart.draw_series(
+//                 LineSeries::new(
+//                     (0..metrics.num_invoked).map(|x| x + 1),
+//                     metrics.total_runtime.min..=metrics.total_runtime.max,
+//                 )
+//                 .point_size(2)
+//                 .point_fill(&RED)
+//                 .point_stroke(&BLACK)
+//                 .title(&format!("Docker Total Runtime (Input: {})", input)),
+//             )?;
+//         }
+//
+//         for (input, metrics) in &fibonacci_wasm_metrics {
+//             chart.draw_series(
+//                 LineSeries::new(
+//                     (0..metrics.num_invoked).map(|x| x + 1),
+//                     metrics.startup_time.min..=metrics.startup_time.max,
+//                 )
+//                 .point_size(2)
+//                 .point_fill(&GREEN)
+//                 .point_stroke(&BLACK)
+//                 .title(&format!("Wasm Startup Time (Input: {})", input)),
+//             )?;
+//
+//             chart.draw_series(
+//                 LineSeries::new(
+//                     (0..metrics.num_invoked).map(|x| x + 1),
+//                     metrics.total_runtime.min..=metrics.total_runtime.max,
+//                 )
+//                 .point_size(2)
+//                 .point_fill(&YELLOW)
+//                 .point_stroke(&BLACK)
+//                 .title(&format!("Wasm Total Runtime (Input: {})", input)),
+//             )?;
+//         }
+//
+//         root.present()?;
+//     }
+//     Ok(())
+// }
 
 pub fn print_analyzed_efficiency_metrics(
-    metrics_map: &HashMap<(String, String, String), NormalizedMetrics>,
+    metrics_map: &HashMap<(String, String, String), EfficiencyMetrics>,
 ) {
-    let mut keys: Vec<&(String, String, String)> = metrics_map.keys().clone().collect();
+    let mut keys: Vec<&(String, String, String)> = metrics_map
+        .iter()
+        .filter(|((_, func_name, _), _)| func_name == "fibonacci-recursive")
+        .map(|(k, _)| k)
+        .collect();
+    println!("rpi keys: {}", keys.len());
 
     keys.sort_unstable_by_key(|&key| key.2.parse::<u32>().unwrap());
 
-    println!("{:?}", keys);
+    // let keys: Vec<_> = keys.iter().take(10).collect();
 
     for key in keys {
         let metrics = metrics_map.get(key).unwrap();
+        println!("{:?}", metrics);
 
         println!("Function Type: {}", key.0);
         println!("Function Name: {}", key.1);
         println!("Input: {}", key.2);
+        println!("Invoked: {}", metrics.num_invoked);
+        println!("Startup time:");
         println!(
-            "Startup Time - Min: {}, Max: {}, Median: {}, Average: {:.0}",
-            metrics.startup_time.min,
-            metrics.startup_time.max,
-            metrics.startup_time.median,
-            metrics.startup_time.average
+            "Min: {:.2}ms, Max: {:.2}ms, Median: {:.2}ms, Mean: {:.2}ms, Std Deviation: {:.2}ms",
+            metrics.startup_time.min / 1000.0,
+            metrics.startup_time.max / 1000.0,
+            metrics.startup_time.median / 1000.0,
+            metrics.startup_time.mean / 1000.0,
+            metrics.startup_time.std_deviation / 1000.0
         );
+        println!("Total time:");
         println!(
-            "Total Runtime - Min: {}, Max: {}, Median: {}, Average: {:.0}",
-            metrics.total_runtime.min,
-            metrics.total_runtime.max,
-            metrics.total_runtime.median,
-            metrics.total_runtime.average
+            "Min: {:.2}ms, Max: {:.2}ms, Median: {:.2}ms, Mean: {:.2}ms, Std Deviation: {:.2}ms",
+            metrics.runtime.min / 1000.0,
+            metrics.runtime.max / 1000.0,
+            metrics.runtime.median / 1000.0,
+            metrics.runtime.mean / 1000.0,
+            metrics.runtime.std_deviation / 1000.0
         );
         println!("---------------------------------------");
     }

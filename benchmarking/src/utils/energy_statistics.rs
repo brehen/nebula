@@ -1,28 +1,13 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, str::FromStr};
 
-use super::request::FunctionResult;
+use super::{
+    calc::{median, std_deviation, update_min_max_avg},
+    request::{FunctionResult, ModuleType},
+    Metrics,
+};
 
-#[derive(Default, Debug, Clone, Copy)]
-pub struct Metrics {
-    pub min: f64,
-    pub max: f64,
-    pub median: f64,
-    pub average: f64,
-}
-
-impl Metrics {
-    pub fn new() -> Self {
-        Metrics {
-            min: f64::MAX,
-            max: f64::MIN,
-            median: 0.0,
-            average: 0.0,
-        }
-    }
-}
-
-#[derive(Default)]
-pub struct NormalizedMetrics {
+#[derive(Default, Debug)]
+pub struct EnergyMetrics {
     pub startup_time: Metrics,
     pub total_runtime: Metrics,
     pub average_power: Metrics,
@@ -34,22 +19,29 @@ pub struct NormalizedMetrics {
 
 pub fn analyze_power_data(
     measurements: &[FunctionResult],
-) -> HashMap<(String, String, String), NormalizedMetrics> {
-    let mut normalized_metrics = HashMap::new();
+) -> HashMap<(String, String, String), EnergyMetrics> {
+    let mut energy_metrics = HashMap::new();
+
+    println!("a: {}", measurements.len());
 
     for measurement in measurements {
         let func_type = match measurement.func_type {
             super::request::ModuleType::Docker => "Docker",
             super::request::ModuleType::Wasm => "Wasm",
         };
+
+        if func_type == "Wasm" && measurement.func_name == "exponential" && measurement.input == "0"
+        {
+            println!("{:?}", measurement);
+        }
         let key = (
             func_type.to_owned(),
             measurement.func_name.clone(),
             measurement.input.clone(),
         );
-        let metrics = normalized_metrics
+        let metrics = energy_metrics
             .entry(key)
-            .or_insert_with(NormalizedMetrics::default);
+            .or_insert_with(EnergyMetrics::default);
 
         metrics.num_invoked += 1;
 
@@ -88,143 +80,188 @@ pub fn analyze_power_data(
         }
     }
 
-    calculate_medians(&mut normalized_metrics, measurements);
+    calculate_medians(&mut energy_metrics, measurements);
 
-    normalized_metrics
-}
-
-fn update_min_max_avg(metrics: &mut Metrics, value: f64) {
-    if metrics.min == 0.0 {
-        metrics.min = value;
-    } else {
-        metrics.min = metrics.min.min(value);
-    }
-    metrics.max = metrics.max.max(value);
-    metrics.average += value;
+    energy_metrics
 }
 
 fn calculate_medians(
-    normalized_metrics: &mut HashMap<(String, String, String), NormalizedMetrics>,
+    energy_metrics: &mut HashMap<(String, String, String), EnergyMetrics>,
     measurements: &[FunctionResult],
 ) {
-    for (_, metrics) in normalized_metrics.iter_mut() {
-        metrics.startup_time.median = calculate_median(measurements, |m| {
-            m.metrics
-                .as_ref()
-                .map(|mm| mm.startup_time as f64)
-                .unwrap_or_default()
-        });
-        metrics.total_runtime.median = calculate_median(measurements, |m| {
-            m.metrics
-                .as_ref()
-                .map(|mm| mm.total_runtime as f64)
-                .unwrap_or_default()
-        });
-        metrics.average_power.median = calculate_median(measurements, |m| {
-            m.metrics
-                .as_ref()
-                .map(|mm| mm.average_power.unwrap() as f64)
-                .unwrap_or_default()
-        });
-        metrics.average_power_isolated.median = calculate_median(measurements, |m| {
-            m.metrics
-                .as_ref()
-                .map(|mm| mm.average_power_isolated.unwrap() as f64)
-                .unwrap_or_default()
-        });
-        metrics.energy_consumption_wh.median = calculate_median(measurements, |m| {
-            m.metrics
-                .as_ref()
-                .map(|mm| mm.energy_consumption_wh.unwrap() as f64)
-                .unwrap_or_default()
-        });
-        metrics.energy_consumption_isolated_wh.median = calculate_median(measurements, |m| {
-            m.metrics
-                .as_ref()
-                .map(|mm| mm.energy_consumption_isolated_wh.unwrap() as f64)
-                .unwrap_or_default()
-        });
-        metrics.startup_time.average /= metrics.num_invoked as f64;
-        metrics.total_runtime.average /= metrics.num_invoked as f64;
-        metrics.average_power.average /= metrics.num_invoked as f64;
-        metrics.average_power_isolated.average /= metrics.num_invoked as f64;
-        metrics.energy_consumption_wh.average /= metrics.num_invoked as f64;
-        metrics.energy_consumption_isolated_wh.average /= metrics.num_invoked as f64;
-    }
-}
+    for ((func_type, func_name, input), metrics) in energy_metrics.iter_mut() {
+        let these_measurements: Vec<_> = measurements
+            .iter()
+            .filter(|m| {
+                m.func_type == ModuleType::from_str(func_type).unwrap()
+                    && &m.func_name == func_name
+                    && &m.input == input
+            })
+            .collect();
+        let startup_times: Vec<_> = these_measurements
+            .iter()
+            .flat_map(|m| m.metrics.as_ref().map(|mm| mm.startup_time as f64))
+            .collect();
+        let total_runtimes: Vec<_> = these_measurements
+            .iter()
+            .flat_map(|m| m.metrics.as_ref().map(|mm| mm.total_runtime as f64))
+            .collect();
+        let average_powers: Vec<_> = these_measurements
+            .iter()
+            .flat_map(|m| {
+                m.metrics
+                    .as_ref()
+                    .map(|mm| mm.average_power.unwrap() as f64)
+            })
+            .collect();
+        let average_powers_isolated: Vec<_> = these_measurements
+            .iter()
+            .flat_map(|m| {
+                m.metrics
+                    .as_ref()
+                    .map(|mm| mm.average_power_isolated.unwrap() as f64)
+            })
+            .collect();
+        let energy_consumption_whs: Vec<_> = these_measurements
+            .iter()
+            .flat_map(|m| {
+                m.metrics
+                    .as_ref()
+                    .map(|mm| mm.energy_consumption_wh.unwrap() as f64)
+            })
+            .collect();
 
-fn calculate_median<F>(measurements: &[FunctionResult], f: F) -> f64
-where
-    F: Fn(&FunctionResult) -> f64,
-{
-    let mut values: Vec<_> = measurements.iter().map(f).collect();
-    values.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
-    let mid = values.len() / 2;
-    if values.len() % 2 == 0 {
-        (values[mid - 1] + values[mid]) / 2.0
-    } else {
-        values[mid]
+        let energy_consumption_isolated_whs: Vec<_> = these_measurements
+            .iter()
+            .flat_map(|m| {
+                m.metrics
+                    .as_ref()
+                    .map(|mm| mm.energy_consumption_isolated_wh.unwrap() as f64)
+            })
+            .collect();
+        metrics.startup_time.mean /= metrics.num_invoked as f64;
+        metrics.startup_time.median = median(&startup_times).unwrap_or(0.0);
+        metrics.startup_time.std_deviation = std_deviation(&startup_times).unwrap_or(0.0);
+
+        metrics.total_runtime.mean /= metrics.num_invoked as f64;
+        metrics.total_runtime.median = median(&total_runtimes).unwrap_or(0.0);
+        metrics.total_runtime.std_deviation = std_deviation(&total_runtimes).unwrap_or(0.0);
+
+        metrics.average_power.mean /= metrics.num_invoked as f64;
+        metrics.average_power.median = median(&average_powers).unwrap_or(0.0);
+        metrics.average_power.std_deviation = std_deviation(&average_powers).unwrap_or(0.0);
+
+        metrics.average_power_isolated.mean /= metrics.num_invoked as f64;
+        metrics.average_power_isolated.median = median(&average_powers_isolated).unwrap_or(0.0);
+        metrics.average_power_isolated.std_deviation =
+            std_deviation(&average_powers_isolated).unwrap_or(0.0);
+
+        metrics.energy_consumption_wh.mean /= metrics.num_invoked as f64;
+        metrics.energy_consumption_wh.median = median(&energy_consumption_whs).unwrap_or(0.0);
+        metrics.energy_consumption_wh.std_deviation =
+            std_deviation(&energy_consumption_whs).unwrap_or(0.0);
+
+        metrics.energy_consumption_isolated_wh.mean /= metrics.num_invoked as f64;
+        metrics.energy_consumption_isolated_wh.median =
+            median(&energy_consumption_isolated_whs).unwrap_or(0.0);
+        metrics.energy_consumption_isolated_wh.std_deviation =
+            std_deviation(&energy_consumption_isolated_whs).unwrap_or(0.0);
     }
 }
 
 pub fn print_analyzed_power_metrics(
-    metrics_map: &HashMap<(String, String, String), NormalizedMetrics>,
+    metrics_map: &HashMap<(String, String, String), EnergyMetrics>,
 ) {
-    let mut keys: Vec<&(String, String, String)> = metrics_map.keys().clone().collect();
+    let five_inv: Vec<_> = metrics_map
+        .iter()
+        .filter(|((_func_name, _func_type, _input), m)| {
+            // println!("{}, {}, {}", func_name, func_type, input);
+            m.num_invoked == 0
+        })
+        .collect();
+
+    println!("{:?}", five_inv.len());
+
+    let mut keys: Vec<&(String, String, String)> = metrics_map
+        .iter()
+        .filter(|((_, func_name, _), _m)| func_name == "fibonacci")
+        .map(|(k, _)| k)
+        .collect();
 
     keys.sort_unstable_by_key(|&key| key.2.parse::<u32>().unwrap());
-    println!("{:?}", keys);
 
-    let keys: Vec<_> = keys.iter().take(10).collect();
+    for i in 0..300 {
+        let koys: Vec<_> = keys
+            .iter()
+            .filter(|(_, _, input)| i * 5 == input.parse::<u32>().unwrap())
+            .collect();
 
-    for key in keys {
-        let metrics = metrics_map.get(key).unwrap();
-        println!("Function Type: {}", key.0);
-        println!("Function Name: {}", key.1);
-        println!("Input: {}", key.2);
-        println!("Invoked: {}", metrics.num_invoked);
-        println!(
-            "Startup Time - Min: {:.2}ms, Max: {:.2}ms, Median: {:.2}ms, Average: {:.2}ms",
-            metrics.startup_time.min / 1000.0,
-            metrics.startup_time.max / 1000.0,
-            metrics.startup_time.median / 1000.0,
-            metrics.startup_time.average / 1000.0
-        );
-        println!(
-            "Total Runtime - Min: {:.2}ms, Max: {:.2}ms, Median: {:.2}ms, Average: {:.2}ms",
-            metrics.total_runtime.min / 1000.0,
-            metrics.total_runtime.max / 1000.0,
-            metrics.total_runtime.median / 1000.0,
-            metrics.total_runtime.average / 1000.0
-        );
-        println!(
-            "Average Power - Min: {:.2}W, Max: {:.2}W, Median: {:.2}W, Average: {:.2}W",
-            metrics.average_power.min,
-            metrics.average_power.max,
-            metrics.average_power.median,
-            metrics.average_power.average
-        );
-        println!(
-            "Average Power Isolated - Min: {:.3}W, Max: {:.3}W, Median: {:.4}W, Average: {:.4}W",
-            metrics.average_power_isolated.min,
-            metrics.average_power_isolated.max,
-            metrics.average_power_isolated.median,
-            metrics.average_power_isolated.average
-        );
-        println!(
-            "Energy Consumption WH - Min: {:.9}μWh, Max: {:.9}μWh, Median: {:.9}μWh, Average: {:.9}μWh",
-            metrics.energy_consumption_wh.min * 1_000_000.0,
-            metrics.energy_consumption_wh.max * 1_000_000.0,
-            metrics.energy_consumption_wh.median * 1_000_000.0,
-            metrics.energy_consumption_wh.average * 1_000_000.0,
-        );
-        println!(
-            "Energy Consumption Isolated WH - Min: {:.9}μWh, Max: {:.9}μWh, Median: {:.9}μWh, Average: {:.9}μWh",
-            metrics.energy_consumption_isolated_wh.min * 1_000_000.0,
-            metrics.energy_consumption_isolated_wh.max * 1_000_000.0,
-            metrics.energy_consumption_isolated_wh.median * 1_000_000.0,
-            metrics.energy_consumption_isolated_wh.average * 1_000_000.0
-        );
-        println!("---------------------------------------");
+        if koys.len() < 2 {
+            println!("{:?}", koys);
+        }
     }
+
+    // println!("so many keys: {}", keys.len());
+    //
+    // let keys: Vec<_> = keys.iter().take(10).collect();
+    //
+    // for key in keys {
+    //     let metrics = metrics_map.get(key).unwrap();
+    //     println!("Function Type: {}", key.0);
+    //     println!("Function Name: {}", key.1);
+    //     println!("Input: {}", key.2);
+    //     println!("Invoked: {}", metrics.num_invoked);
+    //     println!(
+    //         "Startup Time - Min: {:.2}ms, Max: {:.2}ms, Median: {:.2}ms, Mean: {:.2}ms, Std Deviation: {:.2}ms",
+    //         metrics.startup_time.min / 1000.0,
+    //         metrics.startup_time.max / 1000.0,
+    //         metrics.startup_time.median / 1000.0,
+    //         metrics.startup_time.mean / 1000.0,
+    //         metrics.startup_time.std_deviation / 1000.0,
+    //
+    //     );
+    //     println!(
+    //         "Total Runtime - Min: {:.2}ms, Max: {:.2}ms, Median: {:.2}ms, Mean: {:.2}ms, Std Deviation: {:.2}ms",
+    //         metrics.total_runtime.min / 1000.0,
+    //         metrics.total_runtime.max / 1000.0,
+    //         metrics.total_runtime.median / 1000.0,
+    //         metrics.total_runtime.mean / 1000.0,
+    //         metrics.total_runtime.std_deviation / 1000.0
+    //     );
+    //     println!(
+    //         "Average Power - Min: {:.2}W, Max: {:.2}W, Median: {:.2}W, Mean: {:.2}W, Std Deviation: {:.2}W",
+    //         metrics.average_power.min,
+    //         metrics.average_power.max,
+    //         metrics.average_power.median,
+    //         metrics.average_power.mean,
+    //         metrics.average_power.std_deviation,
+    //
+    //     );
+    //     println!(
+    //         "Average Power Isolated - Min: {:.3}W, Max: {:.3}W, Median: {:.4}W, Mean: {:.4}W, Std Deviation: {:.2}W",
+    //         metrics.average_power_isolated.min,
+    //         metrics.average_power_isolated.max,
+    //         metrics.average_power_isolated.median,
+    //         metrics.average_power_isolated.mean,
+    //         metrics.average_power_isolated.std_deviation,
+    //
+    //     );
+    //     println!(
+    //         "Energy Consumption WH - Min: {:.3}μWh, Max: {:.3}μWh, Median: {:.3}μWh, Mean: {:.3}μWh, Std Deviation: {:.3}μWh",
+    //         metrics.energy_consumption_wh.min * 1_000_000.0,
+    //         metrics.energy_consumption_wh.max * 1_000_000.0,
+    //         metrics.energy_consumption_wh.median * 1_000_000.0,
+    //         metrics.energy_consumption_wh.mean * 1_000_000.0,
+    //         metrics.energy_consumption_wh.std_deviation * 1_000_000.0,
+    //     );
+    //     println!(
+    //         "Energy Consumption Isolated WH - Min: {:.3}μWh, Max: {:.3}μWh, Median: {:.3}μWh, Mean: {:.3}μWh, Std Deviation: {:.3}μWh",
+    //         metrics.energy_consumption_isolated_wh.min * 1_000_000.0,
+    //         metrics.energy_consumption_isolated_wh.max * 1_000_000.0,
+    //         metrics.energy_consumption_isolated_wh.median * 1_000_000.0,
+    //         metrics.energy_consumption_isolated_wh.mean * 1_000_000.0,
+    //         metrics.energy_consumption_isolated_wh.std_deviation * 1_000_000.0,
+    //     );
+    //     println!("---------------------------------------");
+    // }
 }

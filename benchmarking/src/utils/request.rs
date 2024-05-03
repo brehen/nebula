@@ -1,6 +1,6 @@
 use reqwest::Client;
 use serde_derive::{Deserialize, Serialize};
-use std::{fmt, time::Duration};
+use std::{fmt, str::FromStr, time::Duration};
 use tokio::time::{sleep, Instant};
 
 use crate::utils::file::write_results;
@@ -12,9 +12,10 @@ use crate::utils::file::write_results;
 pub async fn bombard_nebula(client: Client, url: &str) -> anyhow::Result<Vec<FunctionResult>> {
     // name, max input value before it breaks, increments of input
     let modules: Vec<(&str, u32, u32)> = vec![
-        // ("exponential", 706, 2), // 709 is max
-        // ("factorial", 130, 1),   // 130 is max
-        ("fibonacci", 300, 5),     // max is very high, but 300 is fine
+        ("exponential", 706, 2), // 709 is max
+        ("factorial", 130, 1),   // 130 is max
+        ("fibonacci-recursive", 40, 1),
+        // ("fibonacci", 300, 5),     // max is very high, but 300 is fine
         ("prime-number", 600, 10), // max is very high, but 600 is fine
     ];
     // let base_images = ["debian", "ubuntu", "archlinux"];
@@ -43,7 +44,7 @@ pub async fn bombard_nebula(client: Client, url: &str) -> anyhow::Result<Vec<Fun
                 elapsed.as_secs() / 60,
                 elapsed.as_secs() % 60
             );
-            for _ in 0..5 {
+            for _ in 0..6 {
                 let wasm_results =
                     make_request(&client, url, module.0, "Wasm", &input_value.to_string(), "")
                         .await?;
@@ -156,10 +157,29 @@ impl fmt::Display for FunctionResult {
     }
 }
 
-#[derive(Serialize, Clone, Deserialize, Debug)]
+#[derive(Serialize, Clone, Deserialize, Debug, PartialOrd)]
 pub enum ModuleType {
     Docker,
     Wasm,
+}
+impl PartialEq for ModuleType {
+    fn eq(&self, other: &Self) -> bool {
+        matches!(
+            (self, other),
+            (Self::Docker, Self::Docker) | (Self::Wasm, Self::Wasm)
+        )
+    }
+}
+impl FromStr for ModuleType {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "Docker" => Ok(ModuleType::Docker),
+            "Wasm" => Ok(ModuleType::Wasm),
+            _ => Err(format!("Invalid module type: {}", s)),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
