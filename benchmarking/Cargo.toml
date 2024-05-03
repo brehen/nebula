@@ -9,6 +9,7 @@ edition = "2021"
 anyhow = "1.0.82"
 dirs = "5.0.1"
 paho-mqtt = "0.12.3"
+plotters = "0.3.5"
 reqwest = { version = "0.11.24", features = ["blocking", "json"] }
 rumqttc = "0.24.0"
 serde = "1.0.197"
