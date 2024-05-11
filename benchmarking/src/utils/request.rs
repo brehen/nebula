@@ -12,7 +12,7 @@ use crate::utils::file::write_results;
 pub async fn bombard_nebula(client: Client, url: &str) -> anyhow::Result<Vec<FunctionResult>> {
     // name, max input value before it breaks, increments of input
     let modules: Vec<(&str, u32, u32)> = vec![
-        ("exponential", 706, 2), // 709 is max
+        ("exponential", 354, 2), // 709 is max
         ("factorial", 130, 1),   // 130 is max
         ("fibonacci-recursive", 40, 1),
         // ("fibonacci", 300, 5),     // max is very high, but 300 is fine
@@ -68,6 +68,39 @@ pub async fn bombard_nebula(client: Client, url: &str) -> anyhow::Result<Vec<Fun
             format!("temp_{}_results", module.0).as_str(),
         )
         .await?;
+    }
+
+    Ok(function_results)
+}
+
+pub async fn fill_in_function_gaps(
+    client: Client,
+    url: &str,
+    entries_missing_data: Vec<(String, String, String, u32)>,
+) -> anyhow::Result<Vec<FunctionResult>> {
+    let timer = Instant::now();
+
+    let mut function_results: Vec<FunctionResult> = Vec::new();
+
+    for (func_type, func_name, input, num_invoked) in entries_missing_data {
+        let num_missing = 6 - num_invoked;
+        println!(
+            "Measuring input {} for {} ({}), {} times",
+            input, func_name, func_type, num_missing
+        );
+        // do each input value 5 times to account for invariance
+        let elapsed = timer.elapsed();
+        println!(
+            "Benchmark has been running for {}h:{}m:{}s now",
+            elapsed.as_secs() / 3600,
+            elapsed.as_secs() / 60,
+            elapsed.as_secs() % 60
+        );
+        for _ in 0..num_missing {
+            let results = make_request(&client, url, &func_name, &func_type, &input, "").await?;
+            function_results.extend(results);
+            sleep(Duration::from_millis(10)).await;
+        }
     }
 
     Ok(function_results)

@@ -1,14 +1,12 @@
-use std::collections::HashMap;
-use std::str::FromStr;
+use std::{collections::HashMap, str::FromStr};
 
 use serde_derive::Serialize;
 
-use super::calc::median;
-use super::calc::std_deviation;
-use super::calc::update_min_max_avg;
-use super::request::FunctionResult;
-use super::request::ModuleType;
-use super::Metrics; // Import the ModuleType enum
+use super::{
+    calc::{median, std_deviation, update_min_max_avg},
+    request::{FunctionResult, ModuleType},
+    Metrics,
+};
 
 #[derive(Default, Debug, Serialize)]
 pub struct EfficiencyMetrics {

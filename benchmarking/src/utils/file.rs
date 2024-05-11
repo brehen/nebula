@@ -5,7 +5,7 @@ use std::{
 };
 
 use super::modbus::SensorData;
-const VERSION: &str = "0.4.0";
+const VERSION: &str = "0.5.0";
 
 pub fn get_data_path(file_name: &str) -> PathBuf {
     let home_dir = dirs::home_dir().expect("Home directory not found");

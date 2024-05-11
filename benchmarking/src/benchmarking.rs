@@ -1,14 +1,14 @@
 use crate::utils::{
     efficiency_statistics::{analyze_efficiency_data, print_analyzed_efficiency_metrics},
-    energy_statistics::{analyze_power_data, print_analyzed_power_metrics},
+    energy_statistics::{analyze_power_data, get_missing_data, print_analyzed_power_metrics},
     file::{read_values, write_results},
     modbus::{read_modbus_data, SensorData},
     power_estimate::associate_power_measurements,
-    request::{bombard_nebula, FunctionResult},
+    request::{bombard_nebula, fill_in_function_gaps, FunctionResult},
 };
 use reqwest::Client;
 
-pub async fn benchmark_nebula_rpi() {
+pub async fn benchmark_nebula_rpi(fill_in_gaps: bool) {
     let file_name: &str = "energy_data_rpi";
     let client = Client::new();
     let mut results: Vec<FunctionResult> = vec![];
@@ -16,10 +16,24 @@ pub async fn benchmark_nebula_rpi() {
 
     let mut previous_readings: Vec<FunctionResult> = read_values(file_name).await.unwrap();
 
+    let analyzed = analyze_power_data(&previous_readings.clone());
+    let data_to_fill_in = get_missing_data(analyzed);
+
     let mut bombard_handle = tokio::spawn(async move {
-        let result = bombard_nebula(client, "http://192.168.68.69/api/wasm_headless")
+        let result = if !fill_in_gaps {
+            bombard_nebula(client, "http://192.168.68.58/api/wasm_headless")
+                .await
+                .unwrap()
+        } else {
+            println!("Filling in the gaps");
+            fill_in_function_gaps(
+                client,
+                "http://192.168.68.58/api/wasm_headless",
+                data_to_fill_in,
+            )
             .await
-            .unwrap();
+            .unwrap()
+        };
         println!(
             "Invoked in total {} functions during this benchmark",
             result.len()
@@ -33,7 +47,7 @@ pub async fn benchmark_nebula_rpi() {
                 results.extend(result.unwrap());
                 break;
             }
-            data = read_modbus_data("192.168.68.66:502") => {
+            data = read_modbus_data("192.168.68.53:502") => {
                 sensor_readings.push(data.unwrap());
             }
         }
